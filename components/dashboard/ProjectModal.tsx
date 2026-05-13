@@ -33,6 +33,8 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
     firstDraft: "Pending",
     deliveryDate: "",
     orderStart: "",
+    incomingDate: "",
+    orderSheet: "",
     remarks: "",
     deadline: "",
     priority: "Green",
@@ -72,6 +74,8 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
           firstDraft: formData.firstDraft,
           deliveryDate: formData.deliveryDate ? new Date(formData.deliveryDate) : undefined,
           orderStart: formData.orderStart ? new Date(formData.orderStart) : undefined,
+          incomingDate: formData.incomingDate ? new Date(formData.incomingDate) : undefined,
+          orderSheet: formData.orderSheet,
           remarks: formData.remarks,
           deadline: new Date(formData.deadline),
           priority: formData.priority,
@@ -210,22 +214,34 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
             </div>
           </div>
 
-          {/* Row 2.5: Project Start Date */}
+          {/* Row 2.5: Incoming Date + Order Sheet */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-[9px] uppercase tracking-[0.2em] font-black text-white/20">
-                Project Start Date
+                Incoming Date
               </Label>
               <Input
                 type="date"
                 className="bg-white/[0.03] border-white/[0.06] focus:border-emerald-500/40 rounded-xl"
-                value={formData.orderStart}
+                value={formData.incomingDate}
                 onChange={(e) =>
-                  setFormData({ ...formData, orderStart: e.target.value })
+                  setFormData({ ...formData, incomingDate: e.target.value })
                 }
               />
             </div>
-            <div></div> {/* Empty column for balance */}
+            <div className="space-y-2">
+              <Label className="text-[9px] uppercase tracking-[0.2em] font-black text-white/20">
+                Order Sheet (Link)
+              </Label>
+              <Input
+                placeholder="e.g. https://docs.google.com/spreadsheets/..."
+                className="bg-white/[0.03] border-white/[0.06] focus:border-emerald-500/40 rounded-xl"
+                value={formData.orderSheet}
+                onChange={(e) =>
+                  setFormData({ ...formData, orderSheet: e.target.value })
+                }
+              />
+            </div>
           </div>
 
           {/* Row 3: First Draft + Delivery Date */}

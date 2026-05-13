@@ -20,6 +20,8 @@ const ProjectSchema = new mongoose.Schema(
     deliveryDate: { type: Date },
     deadline: { type: Date, required: true },
     orderStart: { type: Date, default: Date.now },
+    incomingDate: { type: Date },
+    orderSheet: { type: String, default: "" },
     timeLeft: { type: String },
     priority: {
       type: String,
