@@ -32,6 +32,7 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
     developerName: "",
     firstDraft: "Pending",
     deliveryDate: "",
+    orderStart: "",
     remarks: "",
     deadline: "",
     priority: "Green",
@@ -70,6 +71,7 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
           developer: { name: formData.developerName },
           firstDraft: formData.firstDraft,
           deliveryDate: formData.deliveryDate ? new Date(formData.deliveryDate) : undefined,
+          orderStart: formData.orderStart ? new Date(formData.orderStart) : undefined,
           remarks: formData.remarks,
           deadline: new Date(formData.deadline),
           priority: formData.priority,
@@ -88,6 +90,7 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
           developerName: "",
           firstDraft: "Pending",
           deliveryDate: "",
+          orderStart: "",
           remarks: "",
           deadline: "",
           priority: "Green",
@@ -205,6 +208,24 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Row 2.5: Project Start Date */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-[9px] uppercase tracking-[0.2em] font-black text-white/20">
+                Project Start Date
+              </Label>
+              <Input
+                type="date"
+                className="bg-white/[0.03] border-white/[0.06] focus:border-emerald-500/40 rounded-xl"
+                value={formData.orderStart}
+                onChange={(e) =>
+                  setFormData({ ...formData, orderStart: e.target.value })
+                }
+              />
+            </div>
+            <div></div> {/* Empty column for balance */}
           </div>
 
           {/* Row 3: First Draft + Delivery Date */}
