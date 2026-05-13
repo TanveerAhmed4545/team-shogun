@@ -27,12 +27,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
 export default function TeamPage() {
+  const { data: session } = useSession();
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPending, setShowPending] = useState(false);
+  
+  const isAdmin = session?.user?.role === "admin";
 
   useEffect(() => {
     async function fetchTeam() {
@@ -131,7 +135,7 @@ export default function TeamPage() {
                 </p>
               </div>
               <div className="flex items-center space-x-3">
-                {pendingMembers.length > 0 && (
+                {isAdmin && pendingMembers.length > 0 && (
                   <Button
                     variant="outline"
                     className={`rounded-xl border-white/[0.06] font-bold ${
@@ -150,8 +154,9 @@ export default function TeamPage() {
           </motion.div>
 
           {/* Pending Approval Queue */}
-          <AnimatePresence>
-            {showPending && pendingMembers.length > 0 && (
+          {isAdmin && (
+            <AnimatePresence>
+              {showPending && pendingMembers.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
@@ -212,8 +217,9 @@ export default function TeamPage() {
                   </CardContent>
                 </Card>
               </motion.div>
-            )}
-          </AnimatePresence>
+              )}
+            </AnimatePresence>
+          )}
 
           {/* Members Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -250,52 +256,54 @@ export default function TeamPage() {
                               {member.name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger
-                              render={
-                                <button className="rounded-xl hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 flex items-center justify-center">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </button>
-                              }
-                            />
-                            <DropdownMenuContent className="bg-[#12181F] border-white/10 text-white">
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleRoleUpdate(member._id, "admin")
+                          {isAdmin && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                render={
+                                  <button className="rounded-xl hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 flex items-center justify-center">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </button>
                                 }
-                              >
-                                Make Admin
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleRoleUpdate(member._id, "moderator")
-                                }
-                              >
-                                Make Moderator
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleRoleUpdate(member._id, "member")
-                                }
-                              >
-                                Make Member
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleStatusUpdate(member._id, "suspended")
-                                }
-                                className="text-rose-500 focus:text-rose-500"
-                              >
-                                Suspend
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDelete(member._id)}
-                                className="text-rose-500 focus:text-rose-500"
-                              >
-                                Remove
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                              />
+                              <DropdownMenuContent className="bg-[#12181F] border-white/10 text-white">
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleRoleUpdate(member._id, "admin")
+                                  }
+                                >
+                                  Make Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleRoleUpdate(member._id, "moderator")
+                                  }
+                                >
+                                  Make Moderator
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleRoleUpdate(member._id, "member")
+                                  }
+                                >
+                                  Make Member
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleStatusUpdate(member._id, "suspended")
+                                  }
+                                  className="text-rose-500 focus:text-rose-500"
+                                >
+                                  Suspend
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDelete(member._id)}
+                                  className="text-rose-500 focus:text-rose-500"
+                                >
+                                  Remove
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
 
                         <div className="space-y-4">
