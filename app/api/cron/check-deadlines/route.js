@@ -1,0 +1,74 @@
+import { NextResponse } from "next/server";
+import dbConnect from "@/lib/db";
+import Project from "@/models/Project";
+import User from "@/models/User";
+import Notification from "@/models/Notification";
+import { sendDeadlineEmail } from "@/lib/email";
+
+// This route should be secured in production so only the cron job can hit it.
+// You can use a CRON_SECRET environment variable for this.
+export async function GET(req) {
+  try {
+    // Optional: Security check
+    // const authHeader = req.headers.get('authorization');
+    // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    //   return new Response('Unauthorized', { status: 401 });
+    // }
+
+    await dbConnect();
+
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
+
+    // Find projects where the deadline is within the next 24 hours, and not completed
+    const projects = await Project.find({
+      orderStatus: { $nin: ["Completed", "Delivered", "Cancelled"] },
+      deadline: {
+        $gte: now,
+        $lte: tomorrow
+      }
+    });
+
+    if (projects.length === 0) {
+      return NextResponse.json({ message: "No approaching deadlines found." }, { status: 200 });
+    }
+
+    const emailPromises = [];
+    const notificationPromises = [];
+
+    for (const project of projects) {
+      if (project.developer && project.developer.name) {
+        // Find the developer's email
+        const developer = await User.findOne({ name: project.developer.name });
+        
+        if (developer && developer.email) {
+          // 1. Send Email
+          emailPromises.push(
+            sendDeadlineEmail(developer.email, developer.name, project.orderId, project.deadline)
+          );
+
+          // 2. Create in-app notification for the developer
+          notificationPromises.push(
+            Notification.create({
+              userId: developer._id,
+              title: "Deadline Approaching",
+              message: `Warning: Order ${project.orderId} is due in less than 24 hours.`,
+              type: "deadline",
+              link: "/projects"
+            })
+          );
+        }
+      }
+    }
+
+    await Promise.all([...emailPromises, ...notificationPromises]);
+
+    return NextResponse.json({ 
+      message: `Processed ${projects.length} approaching deadlines.` 
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error("Cron Deadline Check Error:", error);
+    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+  }
+}
