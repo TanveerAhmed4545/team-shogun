@@ -1,19 +1,12 @@
-import { NextResponse } from "next/server";
-import dbConnect from "@/lib/db";
-import Activity from "@/models/Activity";
-
-// Removed DEMO_ACTIVITIES
+import { activityService } from "@/lib/services/activity.service";
+import { ApiResponse } from "@/lib/utils/api-response";
 
 export async function GET(req) {
   try {
-    const db = await dbConnect();
-    if (!db) {
-      return NextResponse.json({ activities: [] }, { status: 200 });
-    }
-    const activities = await Activity.find({}).sort({ createdAt: -1 }).limit(10);
-    return NextResponse.json({ activities }, { status: 200 });
+    const activities = await activityService.getRecentActivities();
+    return ApiResponse.success({ activities });
   } catch (error) {
     console.error("Activities GET Error:", error);
-    return NextResponse.json({ activities: [] }, { status: 200 });
+    return ApiResponse.success({ activities: [] }, "Could not fetch activities");
   }
 }

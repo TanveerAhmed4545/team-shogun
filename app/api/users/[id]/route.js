@@ -1,25 +1,23 @@
-import { NextResponse } from "next/server";
+import { userService } from "@/lib/services/user.service";
+import { ApiResponse } from "@/lib/utils/api-response";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
 
 export async function GET(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.status !== "active") {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return ApiResponse.unauthorized();
     }
 
-    await dbConnect();
     const { id } = await params;
-    const user = await User.findById(id).select("-password");
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
-    return NextResponse.json({ user }, { status: 200 });
+    const user = await userService.getUserById(id);
+    if (!user) return ApiResponse.notFound("User not found");
+
+    return ApiResponse.success({ user });
   } catch (error) {
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    console.error("User GET Error:", error);
+    return ApiResponse.error();
   }
 }
 
@@ -27,53 +25,41 @@ export async function PUT(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.status !== "active") {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return ApiResponse.unauthorized();
     }
 
     const { id } = await params;
     if (session.user.role !== "admin" && session.user.id !== id) {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return ApiResponse.forbidden();
     }
 
-    await dbConnect();
     const data = await req.json();
+    if (data.password) delete data.password;
 
-    // Prevent password updates through this route
-    if (data.password) {
-      delete data.password;
-    }
+    const user = await userService.updateUser(id, data);
+    if (!user) return ApiResponse.notFound("User not found");
 
-    const user = await User.findByIdAndUpdate(id, data, { new: true, runValidators: true }).select("-password");
-
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ user }, { status: 200 });
+    return ApiResponse.success({ user }, "User updated successfully");
   } catch (error) {
-    return NextResponse.json({ message: "Failed to update user", error: error.message }, { status: 500 });
+    console.error("User PUT Error:", error);
+    return ApiResponse.error("Failed to update user");
   }
 }
 
 export async function DELETE(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    // Only Admin can delete users
     if (!session || session.user.status !== "active" || session.user.role !== "admin") {
-      return NextResponse.json({ message: "Unauthorized or Forbidden" }, { status: 403 });
+      return ApiResponse.forbidden();
     }
 
-    await dbConnect();
     const { id } = await params;
+    const user = await userService.deleteUser(id);
+    if (!user) return ApiResponse.notFound("User not found");
 
-    const user = await User.findByIdAndDelete(id);
-
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ message: "User deleted successfully" }, { status: 200 });
+    return ApiResponse.success(null, "User deleted successfully");
   } catch (error) {
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    console.error("User DELETE Error:", error);
+    return ApiResponse.error();
   }
 }

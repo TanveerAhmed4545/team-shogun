@@ -15,6 +15,7 @@ import { MoreHorizontal, Clock, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { getTimeLeft, autoPriority } from "@/lib/utils/project";
 
 const statusStyles: Record<string, string> = {
   Pending: "bg-amber-500/10 text-amber-500 border-amber-500/20",
@@ -31,27 +32,7 @@ const priorityColors: Record<string, string> = {
   Red: "bg-rose-500",
 };
 
-function getTimeLeft(deadline: string) {
-  const now = new Date();
-  const dl = new Date(deadline);
-  const diff = dl.getTime() - now.getTime();
-  if (diff <= 0) return { text: "Overdue", color: "text-rose-500" };
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  if (days > 3) return { text: `${days}d ${hours}h`, color: "text-emerald-500" };
-  if (days >= 1) return { text: `${days}d ${hours}h`, color: "text-amber-500" };
-  return { text: `${hours}h`, color: "text-rose-500" };
-}
-
-function autoPriority(deadline: string) {
-  const now = new Date();
-  const dl = new Date(deadline);
-  const diff = dl.getTime() - now.getTime();
-  const days = diff / (1000 * 60 * 60 * 24);
-  if (days > 3) return "Green";
-  if (days >= 1) return "Yellow";
-  return "Red";
-}
+// Using centralized utilities from @/lib/utils/project
 
 const statusFlow = ["Pending", "WIP", "Revision", "Delivered", "Completed"];
 
@@ -158,8 +139,8 @@ export function ProjectTable({ refreshTrigger }: { refreshTrigger?: number }) {
               </TableRow>
             ) : (
               projects.map((project: any) => {
-                const timeLeft = getTimeLeft(project.deadline);
-                const priority = autoPriority(project.deadline);
+                const timeLeft = getTimeLeft(project.deadline, project.orderStatus);
+                const priority = project.orderStatus === "Completed" || project.orderStatus === "Delivered" ? "Green" : autoPriority(project.deadline);
                 return (
                   <TableRow
                     key={project._id}

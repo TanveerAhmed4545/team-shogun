@@ -1,66 +1,30 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
+import { authService } from "@/lib/services/auth.service";
+import { registerSchema } from "@/lib/validations/auth.schema";
+import { ApiResponse } from "@/lib/utils/api-response";
 
 export async function POST(req) {
   try {
-    await dbConnect();
-    const { name, email, password } = await req.json();
-
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { message: "Please fill in all fields." },
-        { status: 400 }
-      );
+    const body = await req.json();
+    
+    // 1. Validate Input
+    const validatedData = registerSchema.safeParse(body);
+    if (!validatedData.success) {
+      return ApiResponse.badRequest("Validation failed", validatedData.error.format());
     }
 
-    const existingUser = await User.findOne({ email });
+    // 2. Register User
+    const user = await authService.registerUser(validatedData.data);
 
-    if (existingUser) {
-      return NextResponse.json(
-        { message: "User with this email already exists." },
-        { status: 400 }
-      );
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      status: "pending", // Status becomes pending, waiting for admin approval
-    });
-
-    // Create notification for admins
-    try {
-      const Notification = (await import("@/models/Notification")).default;
-      const admins = await User.find({ role: "admin" });
-      
-      const notificationPromises = admins.map(admin => 
-        Notification.create({
-          userId: admin._id,
-          title: "New User Registration",
-          message: `${name} (${email}) has registered and is awaiting approval.`,
-          type: "team",
-          link: "/team"
-        })
-      );
-      await Promise.all(notificationPromises);
-    } catch (notificationError) {
-      console.error("Failed to create admin notification:", notificationError);
-      // Don't fail the registration if notification fails
-    }
-
-    return NextResponse.json(
-      { message: "Registration successful. Please wait for admin approval.", userId: newUser._id },
-      { status: 201 }
+    return ApiResponse.success(
+      { userId: user._id }, 
+      "Registration successful. Please wait for admin approval.", 
+      201
     );
   } catch (error) {
-    return NextResponse.json(
-      { message: "An error occurred during registration." },
-      { status: 500 }
-    );
+    console.error("❌ Registration Error:", error);
+    if (error.message.includes("exists")) {
+      return ApiResponse.badRequest(error.message);
+    }
+    return ApiResponse.error("An error occurred during registration.");
   }
 }

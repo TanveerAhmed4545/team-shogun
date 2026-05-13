@@ -42,6 +42,7 @@ import {
   Star,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { getTimeLeft } from "@/lib/utils/project";
 
 const statusStyles: Record<string, string> = {
   Pending: "bg-amber-500/10 text-amber-500 border-amber-500/20",
@@ -60,17 +61,7 @@ const priorityColors: Record<string, string> = {
 
 const kanbanColumns = ["Pending", "WIP", "Revision", "Delivered", "Completed"];
 
-function getTimeLeft(deadline: string) {
-  const now = new Date();
-  const dl = new Date(deadline);
-  const diff = dl.getTime() - now.getTime();
-  if (diff <= 0) return { text: "Overdue", color: "text-rose-500", priority: "Red" };
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  if (days > 3) return { text: `${days}d ${hours}h`, color: "text-emerald-500", priority: "Green" };
-  if (days >= 1) return { text: `${days}d ${hours}h`, color: "text-amber-500", priority: "Yellow" };
-  return { text: `${hours}h`, color: "text-rose-500", priority: "Red" };
-}
+// Using centralized utility from @/lib/utils/project
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<any[]>([]);
@@ -298,7 +289,7 @@ export default function ProjectsPage() {
                         </TableRow>
                       )
                       : filteredProjects.map((project: any) => {
-                          const timeLeft = getTimeLeft(project.deadline);
+                          const timeLeft = getTimeLeft(project.deadline, project.orderStatus);
                           return (
                             <TableRow
                               key={project._id}
@@ -450,7 +441,7 @@ export default function ProjectsPage() {
                       {/* Cards */}
                       <div className="space-y-2 min-h-[200px]">
                         {columnProjects.map((project) => {
-                          const timeLeft = getTimeLeft(project.deadline);
+                          const timeLeft = getTimeLeft(project.deadline, project.orderStatus);
                           return (
                             <motion.div
                               key={project._id}
