@@ -140,7 +140,8 @@ export function ProjectTable({ refreshTrigger }: { refreshTrigger?: number }) {
             ) : (
               projects.map((project: any) => {
                 const timeLeft = getTimeLeft(project.deadline, project.orderStatus);
-                const priority = project.orderStatus === "Completed" || project.orderStatus === "Delivered" ? "Green" : autoPriority(project.deadline);
+                const s = project.orderStatus?.toLowerCase();
+                const priority = (s === "completed" || s === "delivered") ? "Green" : autoPriority(project.deadline);
                 return (
                   <TableRow
                     key={project._id}

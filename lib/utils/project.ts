@@ -3,7 +3,8 @@
  * If the project is Delivered, Completed, or Cancelled, it returns a placeholder.
  */
 export function getTimeLeft(deadline: string | Date, status?: string) {
-  if (status === "Delivered" || status === "Completed" || status === "Cancelled") {
+  const s = status?.toLowerCase();
+  if (s === "delivered" || s === "completed" || s === "cancelled") {
     return { 
       text: "Finished", 
       color: "text-white/20", 
