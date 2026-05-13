@@ -52,6 +52,25 @@ export async function PUT(req, { params }) {
         projectId: project._id,
         type: "status"
       });
+
+      try {
+        const Notification = (await import("@/models/Notification")).default;
+        const User = (await import("@/models/User")).default;
+        
+        const admins = await User.find({ role: "admin" });
+        const notificationPromises = admins.map(admin => 
+          Notification.create({
+            userId: admin._id,
+            title: "Project Status Updated",
+            message: `${session.user.name} changed ${project.orderId} status to ${data.orderStatus}.`,
+            type: "order",
+            link: "/projects"
+          })
+        );
+        await Promise.all(notificationPromises);
+      } catch (notifErr) {
+        console.error("Failed to create notifications:", notifErr);
+      }
     }
 
     return NextResponse.json({ project }, { status: 200 });
