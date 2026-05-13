@@ -95,6 +95,8 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
           firstDraft: "Pending",
           deliveryDate: "",
           orderStart: "",
+          incomingDate: "",
+          orderSheet: "",
           remarks: "",
           deadline: "",
           priority: "Green",
