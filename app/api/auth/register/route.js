@@ -33,6 +33,26 @@ export async function POST(req) {
       status: "pending", // Status becomes pending, waiting for admin approval
     });
 
+    // Create notification for admins
+    try {
+      const Notification = (await import("@/models/Notification")).default;
+      const admins = await User.find({ role: "admin" });
+      
+      const notificationPromises = admins.map(admin => 
+        Notification.create({
+          userId: admin._id,
+          title: "New User Registration",
+          message: `${name} (${email}) has registered and is awaiting approval.`,
+          type: "team",
+          link: "/team"
+        })
+      );
+      await Promise.all(notificationPromises);
+    } catch (notificationError) {
+      console.error("Failed to create admin notification:", notificationError);
+      // Don't fail the registration if notification fails
+    }
+
     return NextResponse.json(
       { message: "Registration successful. Please wait for admin approval.", userId: newUser._id },
       { status: 201 }
