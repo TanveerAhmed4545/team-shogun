@@ -256,7 +256,7 @@ export default function TeamPage() {
                               {member.name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          {isAdmin && (
+                          {isAdmin && session?.user?.id !== member._id && (
                             <DropdownMenu>
                               <DropdownMenuTrigger
                                 render={

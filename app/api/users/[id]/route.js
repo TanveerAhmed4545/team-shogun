@@ -36,6 +36,12 @@ export async function PUT(req, { params }) {
     const data = await req.json();
     if (data.password) delete data.password;
 
+    // Security: Only admins can change role or status
+    if (session.user.role !== "admin") {
+      delete data.role;
+      delete data.status;
+    }
+
     const user = await userService.updateUser(id, data);
     if (!user) return ApiResponse.notFound("User not found");
 
