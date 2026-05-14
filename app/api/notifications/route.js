@@ -1,16 +1,27 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
 import dbConnect from "@/lib/db";
 import Notification from "@/models/Notification";
 
-// Removed DEMO_NOTIFICATIONS
-
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.status !== "active") {
+      return NextResponse.json({ notifications: [] }, { status: 401 });
+    }
+
     const db = await dbConnect();
     if (!db) {
       return NextResponse.json({ notifications: [] }, { status: 200 });
     }
-    const notifications = await Notification.find({}).sort({ createdAt: -1 }).limit(30);
+
+    let query = {};
+    if (session.user.role !== "admin") {
+      query = { userId: session.user.id };
+    }
+
+    const notifications = await Notification.find(query).sort({ createdAt: -1 }).limit(30);
     return NextResponse.json({ notifications }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ notifications: [] }, { status: 200 });

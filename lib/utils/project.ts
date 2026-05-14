@@ -6,7 +6,7 @@ export function getTimeLeft(deadline: string | Date, status?: string) {
   const s = status?.toLowerCase();
   if (s === "delivered" || s === "completed" || s === "cancelled") {
     return { 
-      text: "Finished", 
+      text: "Order Done", 
       color: "text-white/20", 
       priority: "Green" 
     };

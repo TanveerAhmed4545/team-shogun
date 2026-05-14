@@ -41,6 +41,7 @@ import {
   User,
   Star,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { getTimeLeft } from "@/lib/utils/project";
 
@@ -64,6 +65,9 @@ const kanbanColumns = ["Pending", "WIP", "Revision", "Delivered", "Completed"];
 // Using centralized utility from @/lib/utils/project
 
 export default function ProjectsPage() {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
+
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -370,25 +374,29 @@ export default function ProjectsPage() {
                                       <span className="text-[10px] font-bold text-amber-400">{project.star}</span>
                                     </div>
                                   )}
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="rounded-xl hover:bg-blue-500/10 hover:text-blue-500 h-8 w-8 opacity-0 group-hover:opacity-100 transition-all"
-                                    onClick={() => {
-                                      setEditProject(project);
-                                      setEditOpen(true);
-                                    }}
-                                  >
-                                    <Edit3 className="w-3.5 h-3.5" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="rounded-xl hover:bg-rose-500/10 hover:text-rose-500 h-8 w-8 opacity-0 group-hover:opacity-100 transition-all"
-                                    onClick={() => handleDelete(project._id)}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </Button>
+                                  {(isAdmin || session?.user?.id === project.developer?.id || session?.user?.id === project.createdBy) && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="rounded-xl hover:bg-blue-500/10 hover:text-blue-500 h-8 w-8 opacity-0 group-hover:opacity-100 transition-all"
+                                      onClick={() => {
+                                        setEditProject(project);
+                                        setEditOpen(true);
+                                      }}
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  )}
+                                  {isAdmin && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="rounded-xl hover:bg-rose-500/10 hover:text-rose-500 h-8 w-8 opacity-0 group-hover:opacity-100 transition-all"
+                                      onClick={() => handleDelete(project._id)}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  )}
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -452,8 +460,12 @@ export default function ProjectsPage() {
                               <Card
                                 className="bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04] transition-all group cursor-pointer"
                                 onClick={() => {
-                                  setEditProject(project);
-                                  setEditOpen(true);
+                                  if (isAdmin || session?.user?.id === project.developer?.id || session?.user?.id === project.createdBy) {
+                                    setEditProject(project);
+                                    setEditOpen(true);
+                                  } else {
+                                    toast.error("You don't have permission to edit this project.");
+                                  }
                                 }}
                               >
                                 <CardContent className="p-4 space-y-3">

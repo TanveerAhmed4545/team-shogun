@@ -35,6 +35,21 @@ export async function PUT(req, { params }) {
 
     await dbConnect();
     const { id } = await params;
+    
+    // First, fetch the project to check ownership
+    const existingProject = await Project.findById(id);
+    if (!existingProject) {
+      return NextResponse.json({ message: "Project not found" }, { status: 404 });
+    }
+
+    const isAdmin = session.user.role === "admin";
+    const isDeveloper = existingProject.developer?.id?.toString() === session.user.id;
+    const isCreator = existingProject.createdBy?.toString() === session.user.id;
+
+    if (!isAdmin && !isDeveloper && !isCreator) {
+      return NextResponse.json({ message: "Forbidden: You do not have permission to edit this project." }, { status: 403 });
+    }
+
     const data = await req.json();
 
     const project = await Project.findByIdAndUpdate(id, data, { new: true, runValidators: true });
