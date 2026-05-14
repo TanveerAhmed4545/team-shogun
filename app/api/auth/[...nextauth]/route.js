@@ -46,11 +46,16 @@ export const authOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.status = user.status;
+      }
+      // Handle real-time updates from useSession().update()
+      if (trigger === "update" && session?.user) {
+        if (session.user.role) token.role = session.user.role;
+        if (session.user.status) token.status = session.user.status;
       }
       return token;
     },

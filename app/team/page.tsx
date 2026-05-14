@@ -31,7 +31,7 @@ import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
 export default function TeamPage() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPending, setShowPending] = useState(false);
@@ -65,7 +65,12 @@ export default function TeamPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (res.ok) toast.success(`Member ${newStatus}`);
+      if (res.ok) {
+        toast.success(`Member ${newStatus}`);
+        if (userId === session?.user?.id) {
+          await update({ ...session, user: { ...session.user, status: newStatus } });
+        }
+      }
       else toast.error("Failed to update");
     } catch {
       toast.error("Network error");
@@ -82,7 +87,12 @@ export default function TeamPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: newRole }),
       });
-      if (res.ok) toast.success(`Role → ${newRole}`);
+      if (res.ok) {
+        toast.success(`Role → ${newRole}`);
+        if (userId === session?.user?.id) {
+          await update({ ...session, user: { ...session.user, role: newRole } });
+        }
+      }
     } catch {
       toast.error("Failed to update role");
     }

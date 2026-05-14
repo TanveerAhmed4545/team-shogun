@@ -47,6 +47,8 @@ export function RecentActivity() {
       }
     }
     fetchActivities();
+    const interval = setInterval(fetchActivities, 30000); // Polling every 30s
+    return () => clearInterval(interval);
   }, []);
 
   return (

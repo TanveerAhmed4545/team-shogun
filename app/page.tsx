@@ -100,6 +100,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchAnalytics();
+    const interval = setInterval(fetchAnalytics, 60000); // Polling every 60s
+    return () => clearInterval(interval);
   }, []);
 
   return (
