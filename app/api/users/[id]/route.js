@@ -55,6 +55,30 @@ export async function PUT(req, { params }) {
     const user = await userService.updateUser(id, data);
     if (!user) return ApiResponse.notFound("User not found");
 
+    // Log Activity & Trigger Pusher [rt-event-trigger]
+    try {
+      const { activityService } = await import("@/lib/services/activity.service");
+      const { pusherServer } = await import("@/lib/pusher");
+      
+      let action = "updated profile";
+      if (data.role) action = `changed role to ${data.role}`;
+      if (data.status) action = `changed status to ${data.status}`;
+
+      await activityService.logActivity({
+        userId: session.user.id,
+        userName: session.user.name,
+        action: `${action} for ${user.name}`,
+        type: "team"
+      });
+
+      await pusherServer.trigger("team-channel", "team-updated", {
+        userId: session.user.id,
+        targetId: id
+      });
+    } catch (e) {
+      console.warn("RT/Activity failed:", e.message);
+    }
+
     return ApiResponse.success({ user }, "User updated successfully");
   } catch (error) {
     console.error("User PUT Error:", error);
@@ -75,6 +99,26 @@ export async function DELETE(req, { params }) {
     const { id } = await params;
     const user = await userService.deleteUser(id);
     if (!user) return ApiResponse.notFound("User not found");
+
+    // Log Activity & Trigger Pusher [rt-event-trigger]
+    try {
+      const { activityService } = await import("@/lib/services/activity.service");
+      const { pusherServer } = await import("@/lib/pusher");
+
+      await activityService.logActivity({
+        userId: session.user.id,
+        userName: session.user.name,
+        action: `removed team member ${user.name}`,
+        type: "team"
+      });
+
+      await pusherServer.trigger("team-channel", "team-updated", {
+        userId: session.user.id,
+        action: "deleted"
+      });
+    } catch (e) {
+      console.warn("RT/Activity failed:", e.message);
+    }
 
     return ApiResponse.success(null, "User deleted successfully");
   } catch (error) {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardSidebar, SidebarProvider } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -180,10 +181,25 @@ export default function TeamPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {loading
               ? Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-64 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse"
-                  />
+                  <Card key={i} className="bg-white/[0.02] border-white/[0.05] p-6 h-64 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <Skeleton className="w-16 h-16 rounded-2xl" />
+                      <Skeleton className="h-8 w-8 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Skeleton className="h-4 w-12 rounded-md" />
+                      <Skeleton className="h-4 w-12 rounded-md" />
+                    </div>
+                    <div className="pt-4 border-t border-white/[0.04] grid grid-cols-3 gap-3">
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                    </div>
+                  </Card>
                 ))
               : activeMembers.length === 0
               ? (

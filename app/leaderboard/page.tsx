@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { DashboardSidebar, SidebarProvider } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Badge } from "@/components/ui/badge";
@@ -85,8 +86,8 @@ export default function LeaderboardPage() {
                    <div className="absolute top-0 right-0 p-2">
                      <Crown className="w-5 h-5 text-amber-500/40" />
                    </div>
-                   <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-amber-500/30">
-                     <img src={data.topPerformer.avatar || `https://ui-avatars.com/api/?name=${data.topPerformer.name}&background=random`} alt="Top" className="w-full h-full object-cover" />
+                   <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-amber-500/30 relative">
+                     <Image src={data.topPerformer.avatar || `https://ui-avatars.com/api/?name=${data.topPerformer.name}&background=random`} alt="Top" fill className="object-cover" />
                    </div>
                    <div>
                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500 mb-1">Top Performer</p>
@@ -118,8 +119,8 @@ export default function LeaderboardPage() {
                       <tr key={member._id} className="hover:bg-white/[0.01] transition-colors group">
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10">
-                              <img src={member.avatar || `https://ui-avatars.com/api/?name=${member.name}`} className="w-full h-full object-cover" />
+                            <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 relative">
+                              <Image src={member.avatar || `https://ui-avatars.com/api/?name=${member.name}`} alt={member.name} fill className="object-cover" />
                             </div>
                             <span className="font-bold text-white group-hover:text-emerald-500 transition-colors">{member.name}</span>
                           </div>

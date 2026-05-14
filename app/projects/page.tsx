@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardSidebar, SidebarProvider } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ProjectModal } from "@/components/dashboard/ProjectModal";
@@ -221,31 +222,37 @@ export default function ProjectsPage() {
                   </TableHeader>
                   <TableBody>
                     {loading
-                      ? Array.from({ length: 5 }).map((_, i) => (
+                      ? Array.from({ length: 8 }).map((_, i) => (
                           <TableRow
                             key={i}
-                            className="border-white/[0.03] animate-pulse"
+                            className="border-white/[0.03] hover:bg-transparent"
                           >
                             <TableCell className="pl-6 py-5">
-                              <div className="h-4 w-32 bg-white/5 rounded" />
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-4 w-32" />
+                                <Skeleton className="h-3 w-20 opacity-50" />
+                              </div>
                             </TableCell>
                             <TableCell>
-                              <div className="h-4 w-20 bg-white/5 rounded" />
+                              <div className="flex items-center space-x-2">
+                                <Skeleton className="h-6 w-6 rounded-lg" />
+                                <Skeleton className="h-4 w-20" />
+                              </div>
                             </TableCell>
                             <TableCell>
-                              <div className="h-6 w-16 bg-white/5 rounded-full" />
+                              <Skeleton className="h-6 w-20 rounded-full" />
                             </TableCell>
                             <TableCell>
-                              <div className="h-4 w-14 bg-white/5 rounded" />
+                              <Skeleton className="h-4 w-14" />
                             </TableCell>
                             <TableCell>
-                              <div className="h-4 w-16 bg-white/5 rounded" />
+                              <Skeleton className="h-4 w-16" />
                             </TableCell>
                             <TableCell>
-                              <div className="h-4 w-10 bg-white/5 rounded" />
+                              <Skeleton className="h-4 w-10" />
                             </TableCell>
-                            <TableCell className="pr-6">
-                              <div className="h-8 w-8 bg-white/5 rounded ml-auto" />
+                            <TableCell className="pr-6 text-right">
+                              <Skeleton className="h-8 w-8 rounded-xl ml-auto" />
                             </TableCell>
                           </TableRow>
                         ))

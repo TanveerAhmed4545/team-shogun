@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Project from "@/models/Project";
 import Activity from "@/models/Activity";
+import { pusherServer } from "@/lib/pusher";
 
 export async function GET(req, { params }) {
   try {
@@ -56,6 +57,16 @@ export async function PUT(req, { params }) {
 
     if (!project) {
       return NextResponse.json({ message: "Project not found" }, { status: 404 });
+    }
+
+    // Trigger Pusher Event [rt-event-trigger]
+    try {
+      await pusherServer.trigger("projects-channel", "project-updated", {
+        projectId: id,
+        userId: session.user.id,
+      });
+    } catch (e) {
+      console.warn("Pusher trigger failed:", e.message);
     }
 
     if (data.orderStatus) {
@@ -116,6 +127,30 @@ export async function DELETE(req, { params }) {
 
     if (!project) {
       return NextResponse.json({ message: "Project not found" }, { status: 404 });
+    }
+
+    // Trigger Pusher Event [rt-event-trigger]
+    try {
+      await pusherServer.trigger("projects-channel", "project-updated", {
+        projectId: id,
+        userId: session.user.id,
+        action: "deleted"
+      });
+    } catch (e) {
+      console.warn("Pusher trigger failed:", e.message);
+    }
+
+    // Log Activity [audit-log]
+    try {
+      await Activity.create({
+        userId: session.user.id,
+        userName: session.user.name || "User",
+        action: `deleted project`,
+        target: project.orderId,
+        type: "project"
+      });
+    } catch (e) {
+      console.warn("Activity logging failed:", e.message);
     }
 
     return NextResponse.json({ message: "Project deleted successfully" }, { status: 200 });

@@ -13,6 +13,7 @@ import {
   User, Camera, Save, Phone, MapPin, Globe, Link2, FileText, Star, Briefcase, TrendingUp, Clock, Plus, X, Image as ImageIcon, CheckCircle2, Award
 } from "lucide-react";
 import toast from "react-hot-toast";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
@@ -173,7 +174,7 @@ export default function ProfilePage() {
             {/* Hero Cover Area */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative rounded-3xl overflow-hidden h-48 sm:h-64 lg:h-72 bg-white/[0.02] border border-white/[0.05] group">
               {coverPreview ? (
-                <img src={coverPreview} alt="Cover" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <Image src={coverPreview} alt="Cover" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-[#0B0F14] to-blue-900/40" />
               )}
@@ -202,7 +203,7 @@ export default function ProfilePage() {
                       <div className="relative inline-block mb-4">
                         <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden bg-gradient-to-br from-emerald-500/20 to-blue-500/20 border-4 border-[#0B0F14] shadow-xl relative group">
                           {avatarPreview ? (
-                            <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                            <Image src={avatarPreview} alt="Avatar" fill className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-white/5">
                               <span className="text-4xl font-black text-white/40">{profile.name?.charAt(0).toUpperCase() || "?"}</span>

@@ -45,6 +45,19 @@ export function DashboardHeader() {
     setTimeout(() => fetchNotifications(), 0);
   }, []);
 
+  // Handle global search shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        const searchInput = document.getElementById("global-search");
+        searchInput?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <header className="h-14 sm:h-16 border-b border-white/[0.04] bg-[#0B0F14]/60 backdrop-blur-2xl px-3 sm:px-4 md:px-8 flex items-center justify-between sticky top-0 z-40 gap-2 sm:gap-4">
       {/* Left side: hamburger + search */}
@@ -61,11 +74,15 @@ export function DashboardHeader() {
         <div className="relative group flex-1 max-w-xs sm:max-w-sm md:max-w-md hidden sm:block">
           <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-emerald-500 transition-colors" />
           <Input
-            placeholder="Search..."
+            id="global-search"
+            placeholder="Search dashboard..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 sm:pl-11 bg-white/[0.03] border-white/[0.04] focus:border-emerald-500/40 focus:ring-emerald-500/10 transition-all rounded-xl h-9 sm:h-10 text-sm placeholder:text-white/15 w-full"
+            className="pl-9 sm:pl-11 pr-12 bg-white/[0.03] border-white/[0.04] focus:border-emerald-500/40 focus:ring-emerald-500/10 transition-all rounded-xl h-9 sm:h-10 text-sm placeholder:text-white/15 w-full"
           />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-[9px] font-black text-white/30 group-focus-within:opacity-0 transition-opacity">
+            <span className="text-[10px]">⌘</span>K
+          </div>
         </div>
 
         {/* Mobile search icon */}

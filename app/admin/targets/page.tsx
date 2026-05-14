@@ -21,6 +21,7 @@ import {
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface TeamMember {
   _id: string;
@@ -314,9 +315,9 @@ export default function RevenueTargetsPage() {
                         >
                           {/* Avatar + Info */}
                           <div className="flex items-center gap-3 flex-1 min-w-0 w-full sm:w-auto">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center text-white font-black text-sm border border-white/[0.06] shrink-0 overflow-hidden">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center text-white font-black text-sm border border-white/[0.06] shrink-0 overflow-hidden relative">
                               {member.avatar ? (
-                                <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                                <Image src={member.avatar} alt={member.name} fill className="object-cover" />
                               ) : (
                                 member.name?.charAt(0).toUpperCase() || "?"
                               )}
