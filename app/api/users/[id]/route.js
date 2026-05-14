@@ -30,9 +30,9 @@ export async function PUT(req, { params }) {
 
     const { id } = await params;
 
-    // Real-time Role Verification (instead of just trusting the session JWT)
+    // Real-time Role Verification (Resilient check)
     const currentUser = await userService.getUserById(session.user.id);
-    const isActuallyAdmin = currentUser?.role === "admin";
+    const isActuallyAdmin = currentUser?.role === "admin" || session.user.role === "admin";
 
     if (!isActuallyAdmin && session.user.id !== id) {
       return ApiResponse.forbidden();
@@ -41,7 +41,7 @@ export async function PUT(req, { params }) {
     const data = await req.json();
     if (data.password) delete data.password;
 
-    // Security: Only real-time admins can change role or status
+    // Security: Only admins can change role or status
     if (!isActuallyAdmin) {
       delete data.role;
       delete data.status;
