@@ -1,38 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DashboardSidebar, SidebarProvider } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, TrendingUp, Target, Star, Users, ArrowUpRight, Crown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Trophy, Star, Crown } from "lucide-react";
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from "recharts";
 
-export default function LeaderboardPage() {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<any>(null);
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queries/keys";
 
-  useEffect(() => {
-    async function fetchPerformance() {
-      try {
-        const res = await fetch("/api/analytics/team-performance");
-        const json = await res.json();
-        if (json.success) {
-          setData(json.data);
-        }
-      } catch (err) {
-        console.error("Error fetching performance data", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchPerformance();
-    const interval = setInterval(fetchPerformance, 60000); // Update every minute
-    return () => clearInterval(interval);
-  }, []);
+export default function LeaderboardPage() {
+  const { data: performanceData, isLoading: loading } = useQuery({
+    queryKey: queryKeys.performance.list(),
+    queryFn: async () => {
+      const res = await fetch("/api/analytics/team-performance");
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || "Failed to fetch");
+      return json.data;
+    },
+    refetchInterval: 60000, // Sync every minute [cache-stale-time]
+  });
 
   if (loading) {
     return (
@@ -52,6 +44,8 @@ export default function LeaderboardPage() {
       </SidebarProvider>
     );
   }
+
+  const data = performanceData;
 
   const chartData = data?.performance.map((d: any) => ({
     name: d.name.split(' ')[0], // Use first name for chart
