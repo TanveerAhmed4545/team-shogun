@@ -97,9 +97,16 @@ export async function PUT(req, { params }) {
 export async function DELETE(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    // Only Admin can delete projects based on Phase 3
-    if (!session || session.user.status !== "active" || session.user.role !== "admin") {
-      return NextResponse.json({ message: "Unauthorized or Forbidden" }, { status: 403 });
+    if (!session || session.user.status !== "active") {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    await dbConnect();
+    const User = (await import("@/models/User")).default;
+    const currentUser = await User.findById(session.user.id);
+
+    if (currentUser?.role !== "admin") {
+      return NextResponse.json({ message: "Forbidden: Admin access only" }, { status: 403 });
     }
 
     await dbConnect();

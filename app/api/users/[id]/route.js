@@ -29,15 +29,20 @@ export async function PUT(req, { params }) {
     }
 
     const { id } = await params;
-    if (session.user.role !== "admin" && session.user.id !== id) {
+
+    // Real-time Role Verification (instead of just trusting the session JWT)
+    const currentUser = await userService.getUserById(session.user.id);
+    const isActuallyAdmin = currentUser?.role === "admin";
+
+    if (!isActuallyAdmin && session.user.id !== id) {
       return ApiResponse.forbidden();
     }
 
     const data = await req.json();
     if (data.password) delete data.password;
 
-    // Security: Only admins can change role or status
-    if (session.user.role !== "admin") {
+    // Security: Only real-time admins can change role or status
+    if (!isActuallyAdmin) {
       delete data.role;
       delete data.status;
     }
@@ -55,7 +60,10 @@ export async function PUT(req, { params }) {
 export async function DELETE(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.status !== "active" || session.user.role !== "admin") {
+    if (!session) return ApiResponse.unauthorized();
+
+    const currentUser = await userService.getUserById(session.user.id);
+    if (session.user.status !== "active" || currentUser?.role !== "admin") {
       return ApiResponse.forbidden();
     }
 
