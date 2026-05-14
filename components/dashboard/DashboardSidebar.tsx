@@ -109,11 +109,28 @@ export function DashboardSidebar() {
   const { data: session } = useSession();
   const { mobileOpen, setMobileOpen, collapsed, setCollapsed } = useSidebar();
   const isAdmin = ((session?.user as any)?.role) === "admin";
+  const [dbStatus, setDbStatus] = useState<"loading" | "online" | "offline">("loading");
 
   // Close mobile sidebar on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname, setMobileOpen]);
+
+  // Check DB Health
+  useEffect(() => {
+    async function checkHealth() {
+      try {
+        const res = await fetch("/api/health");
+        if (res.ok) setDbStatus("online");
+        else setDbStatus("offline");
+      } catch {
+        setDbStatus("offline");
+      }
+    }
+    checkHealth();
+    const interval = setInterval(checkHealth, 30000); // Check every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -194,11 +211,23 @@ export function DashboardSidebar() {
         {/* Footer */}
         <div className={cn("p-3 border-t border-white/[0.04]", collapsed && "px-2")}>
           {!collapsed && (
-            <div className="mb-3 mx-1 px-4 py-2.5 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/10 flex items-center justify-between">
+            <div className="mb-3 mx-1 px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04] flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em]">
-                  System Live
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full animate-pulse",
+                  dbStatus === "online" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" :
+                  dbStatus === "offline" ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" :
+                  "bg-amber-500"
+                )} />
+                <span className={cn(
+                  "text-[9px] font-black uppercase tracking-[0.2em]",
+                  dbStatus === "online" ? "text-emerald-500" :
+                  dbStatus === "offline" ? "text-rose-500" :
+                  "text-amber-500"
+                )}>
+                  {dbStatus === "online" ? "DB Online" : 
+                   dbStatus === "offline" ? "DB Offline" : 
+                   "Connecting..."}
                 </span>
               </div>
               <span className="text-[9px] text-white/20 font-mono font-bold">v2.0</span>
