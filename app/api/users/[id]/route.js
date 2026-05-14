@@ -47,6 +47,11 @@ export async function PUT(req, { params }) {
       delete data.status;
     }
 
+    // If role or status changes, force a logout for the target user
+    if (data.role || data.status) {
+      data.requiresLogout = true;
+    }
+
     const user = await userService.updateUser(id, data);
     if (!user) return ApiResponse.notFound("User not found");
 

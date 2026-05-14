@@ -32,7 +32,8 @@ const UserSchema = new mongoose.Schema(
       deadlineAlerts: { type: Boolean, default: true },
       paymentAlerts: { type: Boolean, default: true },
       monthlyTarget: { type: Number, default: 10000 }
-    }
+    },
+    requiresLogout: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

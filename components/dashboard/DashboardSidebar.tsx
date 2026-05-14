@@ -121,7 +121,13 @@ export function DashboardSidebar() {
     async function checkHealth() {
       try {
         const res = await fetch("/api/health");
-        if (res.ok) setDbStatus("online");
+        const data = await res.json();
+        if (res.ok) {
+          setDbStatus("online");
+          if (data.requiresLogout) {
+            signOut({ callbackUrl: "/login?reason=role-change" });
+          }
+        }
         else setDbStatus("offline");
       } catch {
         setDbStatus("offline");
