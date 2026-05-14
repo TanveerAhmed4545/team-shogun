@@ -14,6 +14,7 @@ import {
   UserCircle,
   Target,
   Shield,
+  Trophy,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -23,6 +24,7 @@ import { useState, useEffect, createContext, useContext } from "react";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
   { icon: Briefcase, label: "Projects", href: "/projects" },
+  { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
   { icon: Users, label: "Team", href: "/team" },
   { icon: Bell, label: "Notifications", href: "/notifications" },
   { icon: UserCircle, label: "Profile", href: "/profile" },

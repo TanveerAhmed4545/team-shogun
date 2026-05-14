@@ -31,8 +31,9 @@ const UserSchema = new mongoose.Schema(
       emailNotifications: { type: Boolean, default: true },
       deadlineAlerts: { type: Boolean, default: true },
       paymentAlerts: { type: Boolean, default: true },
-      monthlyTarget: { type: Number, default: 10000 }
+      monthlyTarget: { type: Number, default: 1100 }
     },
+    stars: { type: Number, default: 0 },
     requiresLogout: { type: Boolean, default: false }
   },
   { timestamps: true }

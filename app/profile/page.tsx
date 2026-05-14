@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus, update } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
@@ -39,10 +39,17 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function fetchUser() {
-      if (!(session?.user as any)?.id) return;
+      if (sessionStatus === "loading") return;
+      if (!session?.user?.id) {
+        setLoading(false);
+        return;
+      }
+      
       try {
-        const res = await fetch(`/api/users/${(session?.user as any)?.id}`);
+        setLoading(true);
+        const res = await fetch(`/api/users/${session.user.id}`);
         const json = await res.json();
+        
         if (json.success && json.data?.user) {
           const user = json.data.user;
           setProfile({
@@ -56,15 +63,18 @@ export default function ProfilePage() {
           });
           if (user.avatar) setAvatarPreview(user.avatar);
           if (user.coverPhoto) setCoverPreview(user.coverPhoto);
+        } else {
+          toast.error("Profile not found");
         }
       } catch (err) {
         console.error("Error fetching user data", err);
+        toast.error("Failed to load profile");
       } finally {
         setLoading(false);
       }
     }
     fetchUser();
-  }, [session]);
+  }, [session, sessionStatus]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "cover") => {
     const file = e.target.files?.[0];
@@ -140,6 +150,25 @@ export default function ProfilePage() {
     { label: "Score", value: profile.performance_score, icon: Star, color: "text-amber-500", bg: "bg-amber-500/10" },
     { label: "On-Time", value: `${profile.on_time_delivery}%`, icon: Clock, color: "text-purple-500", bg: "bg-purple-500/10" },
   ];
+
+  if (loading || sessionStatus === "loading") {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen mesh-bg text-white">
+          <DashboardSidebar />
+          <main className="flex-1 flex flex-col relative overflow-x-hidden min-w-0">
+            <DashboardHeader />
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-2 border-emerald-500 border-t-transparent" />
+                <p className="text-white/40 font-black uppercase tracking-widest text-[10px]">Loading Profile...</p>
+              </div>
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   return (
     <SidebarProvider>

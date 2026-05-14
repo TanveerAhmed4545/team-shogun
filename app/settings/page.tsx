@@ -22,7 +22,6 @@ export default function SettingsPage() {
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
     deadlineAlerts: true,
-    paymentAlerts: true,
   });
   const [saving, setSaving] = useState(false);
   const [passwords, setPasswords] = useState({ current: "", newPass: "", confirm: "" });
@@ -155,7 +154,6 @@ export default function SettingsPage() {
                             {[
                               { label: "Email Notifications", key: "emailNotifications", desc: "Receive daily summaries and critical alerts via email." },
                               { label: "Deadline Alerts", key: "deadlineAlerts", desc: "Get warned 24h before a project deadline expires." },
-                              { label: "Payment Alerts", key: "paymentAlerts", desc: "Instant notifications when finances are updated." },
                             ].map((item) => {
                               const isEnabled = preferences[item.key as keyof typeof preferences];
                               return (
