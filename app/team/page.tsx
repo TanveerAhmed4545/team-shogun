@@ -256,9 +256,9 @@ export default function TeamPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Card className="bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04] transition-all group overflow-hidden relative">
+                    <Card className="bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04] transition-all group overflow-hidden relative h-full flex flex-col">
                       <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-0 group-hover:opacity-30 transition-opacity" />
-                      <CardContent className="p-6">
+                      <CardContent className="p-6 flex-1 flex flex-col">
                         <div className="flex justify-between items-start mb-5">
                           <Avatar className="w-16 h-16 rounded-2xl border-2 border-white/[0.06] group-hover:border-emerald-500/30 transition-colors">
                             <AvatarImage src={member.avatar} />
@@ -316,7 +316,7 @@ export default function TeamPage() {
                           )}
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 flex-1 flex flex-col">
                           <div>
                             <h3 className="text-lg font-black text-white/90 group-hover:text-emerald-500 transition-colors">
                               {member.name}
@@ -333,18 +333,22 @@ export default function TeamPage() {
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap gap-1.5">
-                            {(member.skills || []).slice(0, 3).map((skill: string) => (
-                              <span
-                                key={skill}
-                                className="text-[10px] font-bold text-white/30 bg-white/[0.03] px-2 py-0.5 rounded-md"
-                              >
-                                {skill}
-                              </span>
-                            ))}
+                          <div className="flex flex-wrap gap-1.5 min-h-[22px]">
+                            {member.skills && member.skills.length > 0 ? (
+                              member.skills.slice(0, 3).map((skill: string) => (
+                                <span
+                                  key={skill}
+                                  className="text-[10px] font-bold text-white/30 bg-white/[0.03] px-2 py-0.5 rounded-md border border-white/5"
+                                >
+                                  {skill}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-[10px] font-bold text-white/10 italic">No skills listed</span>
+                            )}
                           </div>
 
-                          <div className="pt-3 border-t border-white/[0.04] grid grid-cols-3 gap-3">
+                          <div className="mt-auto pt-4 border-t border-white/[0.04] grid grid-cols-3 gap-3">
                             <div>
                               <p className="text-[9px] text-white/15 font-black uppercase tracking-wider">
                                 Score
