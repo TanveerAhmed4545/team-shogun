@@ -1,7 +1,7 @@
 import { userService } from "@/lib/services/user.service";
 import { ApiResponse } from "@/lib/utils/api-response";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(req, { params }) {
   try {
