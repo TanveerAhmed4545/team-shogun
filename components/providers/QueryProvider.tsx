@@ -4,21 +4,38 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
 
+function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        // Industry Standard [cache-defaults]: Balance fresh data and performance
+        staleTime: 60 * 1000, 
+        gcTime: 1000 * 60 * 60 * 24,
+        retry: 1,
+        refetchOnWindowFocus: true, // Keep dashboard fresh on tab switch
+        refetchOnReconnect: 'always',
+      },
+    },
+  });
+}
+
+let browserQueryClient: QueryClient | undefined = undefined;
+
+function getQueryClient() {
+  if (typeof window === "undefined") {
+    // Server: always make a new query client
+    return makeQueryClient();
+  } else {
+    // Browser: make a new query client if we don't already have one
+    // This is very important so we don't re-make a new client if React
+    // suspends during the initial render.
+    if (!browserQueryClient) browserQueryClient = makeQueryClient();
+    return browserQueryClient;
+  }
+}
+
 export default function QueryProvider({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            // Rule [cache-defaults]: Set sensible defaults for a high-performance dashboard
-            staleTime: 60 * 1000, // 1 minute
-            gcTime: 1000 * 60 * 60 * 24, // 24 hours
-            retry: 1,
-            refetchOnWindowFocus: false,
-          },
-        },
-      })
-  );
+  const queryClient = getQueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>

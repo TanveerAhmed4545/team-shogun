@@ -10,71 +10,91 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  User, Camera, Save, Mail, Phone, MapPin, Globe, Link2, FileText, Star, Briefcase, TrendingUp, Clock, Plus, X, Image as ImageIcon, CheckCircle2, Award
+  User, Camera, Save, Phone, MapPin, Globe, Link2, FileText, Star, Briefcase, TrendingUp, Clock, Plus, X, Image as ImageIcon, CheckCircle2, Award
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queries/keys";
 
 export default function ProfilePage() {
   const { data: session, status: sessionStatus, update } = useSession();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"about" | "activity" | "settings">("about");
   
-  const [avatarPreview, setAvatarPreview] = useState("");
-  const [coverPreview, setCoverPreview] = useState("");
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
+  const [activeTab, setActiveTab] = useState<"about" | "activity" | "settings">("about");
   const [newSkill, setNewSkill] = useState("");
 
-  const [profile, setProfile] = useState({
-    name: "", email: "", phone: "", bio: "", location: "",
-    avatar: "", coverPhoto: "", facebook: "", linkedin: "",
-    skills: [] as string[], role: "member",
-    performance_score: 0, total_earnings: 0, projects_completed: 0, on_time_delivery: 100,
-    createdAt: "",
+  // Fetch User Data [qk-include-dependencies]
+  const { data: profileData, isLoading: loading } = useQuery({
+    queryKey: queryKeys.users.profile(session?.user?.id || ""),
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${session?.user?.id}`);
+      const json = await res.json();
+      if (!json.success) throw new Error("Profile not found");
+      return json.data.user;
+    },
+    enabled: !!session?.user?.id,
   });
 
+  // Local state for editing [file-separation]
+  const [profile, setProfile] = useState<any>(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const [coverPreview, setCoverPreview] = useState("");
+
+  // Sync local state when query data loads
   useEffect(() => {
-    async function fetchUser() {
-      if (sessionStatus === "loading") return;
-      if (!session?.user?.id) {
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        setLoading(true);
-        const res = await fetch(`/api/users/${session.user.id}`);
-        const json = await res.json();
-        
-        if (json.success && json.data?.user) {
-          const user = json.data.user;
-          setProfile({
-            ...user,
-            skills: user.skills || [],
-            role: user.role || "member",
-            performance_score: user.performance_score || 0,
-            total_earnings: user.total_earnings || 0,
-            projects_completed: user.projects_completed || 0,
-            on_time_delivery: user.on_time_delivery || 100,
-          });
-          if (user.avatar) setAvatarPreview(user.avatar);
-          if (user.coverPhoto) setCoverPreview(user.coverPhoto);
-        } else {
-          toast.error("Profile not found");
-        }
-      } catch (err) {
-        console.error("Error fetching user data", err);
-        toast.error("Failed to load profile");
-      } finally {
-        setLoading(false);
-      }
+    if (profileData) {
+      setTimeout(() => {
+        setProfile(profileData);
+        setAvatarPreview(profileData.avatar || "");
+        setCoverPreview(profileData.coverPhoto || "");
+      }, 0);
     }
-    fetchUser();
-  }, [session, sessionStatus]);
+  }, [profileData]);
+
+  // Mutation for Profile Save [mut-invalidate-queries]
+  const saveMutation = useMutation({
+    mutationFn: async (updatedProfile: any) => {
+      const res = await fetch(`/api/users/${session?.user?.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedProfile),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      return updatedProfile;
+    },
+    onSuccess: () => {
+      toast.success("Profile saved successfully!");
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+    },
+    onError: () => toast.error("Failed to save profile"),
+  });
+
+  // Mutation for Image Upload [mut-loading-states]
+  const uploadMutation = useMutation({
+    mutationFn: async ({ file, type }: { file: File, type: "avatar" | "cover" }) => {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.message || "Upload failed");
+      
+      // Auto-save image URL
+      await fetch(`/api/users/${session?.user?.id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [type === "avatar" ? "avatar" : "coverPhoto"]: data.url })
+      });
+      
+      return { url: data.url, type };
+    },
+    onSuccess: (data) => {
+      toast.success(`${data.type === "avatar" ? "Profile" : "Cover"} photo updated!`);
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+    },
+    onError: () => toast.error("Upload failed"),
+  });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "cover") => {
     const file = e.target.files?.[0];
@@ -91,67 +111,39 @@ export default function ProfilePage() {
     };
     reader.readAsDataURL(file);
 
-    type === "avatar" ? setUploadingAvatar(true) : setUploadingCover(true);
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (res.ok && data.url) {
-        setProfile((prev) => ({ ...prev, [type === "avatar" ? "avatar" : "coverPhoto"]: data.url }));
-        toast.success(`${type === "avatar" ? "Profile" : "Cover"} photo updated!`);
-        // Auto-save the image URL
-        await fetch(`/api/users/${(session?.user as any)?.id}`, {
-          method: "PUT", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ [type === "avatar" ? "avatar" : "coverPhoto"]: data.url })
-        });
-      } else {
-        toast.error(data.message || "Upload failed");
-      }
-    } catch {
-      toast.error("Failed to upload image");
-    } finally {
-      type === "avatar" ? setUploadingAvatar(false) : setUploadingCover(false);
-    }
+    uploadMutation.mutate({ file, type });
   };
 
   const addSkill = () => {
-    if (!newSkill.trim() || profile.skills.includes(newSkill.trim())) return;
-    setProfile({ ...profile, skills: [...profile.skills, newSkill.trim()] });
+    if (!newSkill.trim() || profile?.skills?.includes(newSkill.trim())) return;
+    setProfile({ ...profile, skills: [...(profile?.skills || []), newSkill.trim()] });
     setNewSkill("");
   };
 
   const removeSkill = (skill: string) => {
-    setProfile({ ...profile, skills: profile.skills.filter((s) => s !== skill) });
+    setProfile({ ...profile, skills: profile.skills.filter((s: string) => s !== skill) });
   };
 
   const handleSave = async () => {
-    if (!(session?.user as any)?.id) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/users/${(session?.user as any)?.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: profile.name, email: profile.email, phone: profile.phone,
-          bio: profile.bio, location: profile.location,
-          facebook: profile.facebook, linkedin: profile.linkedin, skills: profile.skills,
-        }),
-      });
-      if (res.ok) toast.success("Profile saved successfully!");
-      else toast.error("Failed to save profile");
-    } catch { toast.error("Network error"); }
-    finally { setSaving(false); }
+    saveMutation.mutate({
+      name: profile.name, email: profile.email, phone: profile.phone,
+      bio: profile.bio, location: profile.location,
+      facebook: profile.facebook, linkedin: profile.linkedin, skills: profile.skills,
+    });
   };
 
   const stats = [
-    { label: "Projects", value: profile.projects_completed, icon: Briefcase, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { label: "Earnings", value: `$${profile.total_earnings.toLocaleString()}`, icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-    { label: "Score", value: profile.performance_score, icon: Star, color: "text-amber-500", bg: "bg-amber-500/10" },
-    { label: "On-Time", value: `${profile.on_time_delivery}%`, icon: Clock, color: "text-purple-500", bg: "bg-purple-500/10" },
+    { label: "Projects", value: profile?.projects_completed || 0, icon: Briefcase, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { label: "Earnings", value: `$${(profile?.total_earnings || 0).toLocaleString()}`, icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+    { label: "Score", value: profile?.performance_score || 0, icon: Star, color: "text-amber-500", bg: "bg-amber-500/10" },
+    { label: "On-Time", value: `${profile?.on_time_delivery || 100}%`, icon: Clock, color: "text-purple-500", bg: "bg-purple-500/10" },
   ];
 
-  if (loading || sessionStatus === "loading") {
+  const uploadingAvatar = uploadMutation.isPending && uploadMutation.variables?.type === "avatar";
+  const uploadingCover = uploadMutation.isPending && uploadMutation.variables?.type === "cover";
+  const saving = saveMutation.isPending;
+
+  if (loading || sessionStatus === "loading" || !profile) {
     return (
       <SidebarProvider>
         <div className="flex min-h-screen mesh-bg text-white">
@@ -337,7 +329,7 @@ export default function ProfilePage() {
                             {profile.skills.length === 0 ? (
                               <p className="text-white/30 text-sm font-medium">No skills added yet.</p>
                             ) : (
-                              profile.skills.map((skill, i) => (
+                              profile.skills.map((skill: string, i: number) => (
                                 <div key={skill} className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/20 text-emerald-400 font-black text-sm shadow-[inset_0_0_20px_rgba(34,197,94,0.05)]">
                                   {skill}
                                 </div>
@@ -405,7 +397,7 @@ export default function ProfilePage() {
                               <Button onClick={addSkill} className="bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl h-12 px-6 font-bold transition-all"><Plus className="w-4 h-4" /></Button>
                             </div>
                             <div className="flex flex-wrap gap-2 pt-2">
-                              {profile.skills.map(skill => (
+                              {profile.skills.map((skill: string) => (
                                 <span key={skill} className="flex items-center gap-1.5 text-sm font-bold text-white/60 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 group">
                                   {skill}
                                   <button onClick={() => removeSkill(skill)} className="text-white/20 hover:text-rose-500"><X className="w-3 h-3" /></button>

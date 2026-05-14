@@ -85,6 +85,7 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const timeAgo = (date: string) => {
+    // eslint-disable-next-line react-hooks/purity
     const ms = Date.now() - new Date(date).getTime();
     const hours = Math.floor(ms / 3600000);
     if (hours < 1) {
@@ -189,9 +190,9 @@ export default function NotificationsPage() {
                       <BellOff className="w-8 h-8 text-white/20" />
                       <div className="absolute inset-0 rounded-full border border-white/5 animate-ping opacity-20" />
                     </div>
-                    <h3 className="text-xl font-black text-white/80 mb-2">It's quiet... too quiet.</h3>
+                    <h3 className="text-xl font-black text-white/80 mb-2">It&apos;s quiet... too quiet.</h3>
                     <p className="text-white/30 font-medium max-w-sm">
-                      You don't have any notifications in this category. Take a break or check another filter!
+                      You don&apos;t have any notifications in this category. Take a break or check another filter!
                     </p>
                   </motion.div>
                 ) : (

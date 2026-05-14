@@ -56,6 +56,7 @@ export function EditProjectModal({
   // Load project data when modal opens
   useEffect(() => {
     if (project && open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         orderId: project.orderId || "",
         value: String(project.value || ""),
@@ -146,29 +147,7 @@ export function EditProjectModal({
     }
   };
 
-  const StarRating = () => (
-    <div className="flex items-center gap-1">
-      {[1, 2, 3, 4, 5].map((s) => (
-        <button
-          key={s}
-          type="button"
-          onClick={() => setFormData({ ...formData, star: formData.star === s ? 0 : s })}
-          className="p-0.5 transition-transform hover:scale-110 active:scale-95"
-        >
-          <Star
-            className={`w-6 h-6 transition-colors ${
-              s <= formData.star
-                ? "text-amber-400 fill-amber-400"
-                : "text-white/10 hover:text-white/25"
-            }`}
-          />
-        </button>
-      ))}
-      {formData.star > 0 && (
-        <span className="text-xs text-amber-400 font-bold ml-2">{formData.star} Star</span>
-      )}
-    </div>
-  );
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -423,7 +402,27 @@ export function EditProjectModal({
               Star Rating
             </Label>
             <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-              <StarRating />
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, star: formData.star === s ? 0 : s })}
+                    className="p-0.5 transition-transform hover:scale-110 active:scale-95"
+                  >
+                    <Star
+                      className={`w-6 h-6 transition-colors ${
+                        s <= formData.star
+                          ? "text-amber-400 fill-amber-400"
+                          : "text-white/10 hover:text-white/25"
+                      }`}
+                    />
+                  </button>
+                ))}
+                {formData.star > 0 && (
+                  <span className="text-xs text-amber-400 font-bold ml-2">{formData.star} Star</span>
+                )}
+              </div>
             </div>
           </div>
 

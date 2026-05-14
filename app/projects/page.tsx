@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queries/keys";
 import { DashboardSidebar, SidebarProvider } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ProjectModal } from "@/components/dashboard/ProjectModal";
@@ -27,17 +29,11 @@ import {
 } from "@/components/ui/select";
 import {
   Search,
-  Filter,
-  MoreVertical,
-  Calendar,
-  DollarSign,
-  ArrowUpRight,
   Clock,
   LayoutGrid,
   LayoutList,
   Trash2,
   Edit3,
-  GripVertical,
   User,
   Star,
 } from "lucide-react";
@@ -64,35 +60,23 @@ const kanbanColumns = ["Pending", "WIP", "Revision", "Delivered", "Completed"];
 
 // Using centralized utility from @/lib/utils/project
 
+import { useProjects, useUpdateProjectStatus, useDeleteProject, Project } from "@/hooks/useProjects";
+
 export default function ProjectsPage() {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const isAdmin = session?.user?.role === "admin";
 
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [editProject, setEditProject] = useState<any>(null);
   const [editOpen, setEditOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchProjects() {
-      try {
-        const res = await fetch("/api/projects");
-        const json = await res.json();
-        if (json.success && json.data) {
-          setProjects(json.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch projects:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProjects();
-  }, [refreshTrigger]);
+  // Modularized Hooks [hook-abstraction]
+  const { data: projects = [], isLoading: loading } = useProjects();
+  const statusMutation = useUpdateProjectStatus();
+  const deleteMutation = useDeleteProject();
 
   const filteredProjects = projects.filter((p: any) => {
     const matchesSearch =
@@ -103,31 +87,13 @@ export default function ProjectsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleStatusChange = async (projectId: string, newStatus: string) => {
-    setProjects((prev) =>
-      prev.map((p) => (p._id === projectId ? { ...p, orderStatus: newStatus } : p))
-    );
-    try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderStatus: newStatus }),
-      });
-      if (res.ok) toast.success(`Status → ${newStatus}`);
-      else toast.error("Failed to update");
-    } catch {
-      toast.error("Network error");
-    }
+  const handleStatusChange = (projectId: string, newStatus: string) => {
+    statusMutation.mutate({ projectId, status: newStatus });
   };
 
-  const handleDelete = async (projectId: string) => {
-    if (!confirm("Delete this project?")) return;
-    setProjects((prev) => prev.filter((p) => p._id !== projectId));
-    try {
-      await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
-      toast.success("Project deleted");
-    } catch {
-      toast.error("Failed to delete");
+  const handleDelete = (projectId: string) => {
+    if (confirm("Delete this project?")) {
+      deleteMutation.mutate(projectId);
     }
   };
 
@@ -178,7 +144,7 @@ export default function ProjectsPage() {
                     <LayoutGrid className="w-4 h-4" />
                   </button>
                 </div>
-                <ProjectModal onSuccess={() => setRefreshTrigger((t) => t + 1)} />
+                <ProjectModal onSuccess={() => queryClient.invalidateQueries({ queryKey: queryKeys.projects.all })} />
               </div>
             </div>
           </motion.div>
@@ -528,7 +494,7 @@ export default function ProjectsPage() {
       project={editProject}
       open={editOpen}
       onOpenChange={setEditOpen}
-      onSuccess={() => setRefreshTrigger((p) => p + 1)}
+      onSuccess={() => queryClient.invalidateQueries({ queryKey: queryKeys.projects.all })}
     />
     </>
   );

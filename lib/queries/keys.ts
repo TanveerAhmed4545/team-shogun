@@ -24,5 +24,9 @@ export const queryKeys = {
     all: ['notifications'] as const,
     unread: () => [...queryKeys.notifications.all, 'unread'] as const,
     list: () => [...queryKeys.notifications.all, 'list'] as const,
+  },
+  analytics: {
+    all: ['analytics'] as const,
+    summary: () => [...queryKeys.analytics.all, 'summary'] as const,
   }
 } as const;

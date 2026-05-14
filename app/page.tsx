@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queries/keys";
 import dynamic from "next/dynamic";
 import { DashboardSidebar, SidebarProvider } from "@/components/dashboard/DashboardSidebar";
 import { KPICard } from "@/components/dashboard/KPICard";
@@ -12,20 +14,14 @@ import {
   DollarSign,
   Briefcase,
   CheckCircle2,
-  TrendingUp,
-  Search,
-  Bell,
-  Plus,
-  ArrowRight,
   XCircle,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ProjectModal } from "@/components/dashboard/ProjectModal";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import Link from "next/link";
-
 import { useSession } from "next-auth/react";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 const RevenueChart = dynamic(
   () =>
@@ -61,48 +57,24 @@ const itemVariants = {
 
 export default function Dashboard() {
   const { data: session } = useSession();
-  const [stats, setStats] = useState({
+  const queryClient = useQueryClient();
+
+  // Modularized Hook [hook-abstraction]
+  const { data: statsData, isLoading: loading } = useAnalytics();
+
+  const stats = statsData || {
     revenue: 0,
     activeOrders: 0,
     totalProjects: 0,
     totalMembers: 0,
     completionRate: 0,
     cancelledRate: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  const handleProjectCreated = () => {
-    setRefreshTrigger((prev) => prev + 1);
-    fetchAnalytics();
   };
 
-  async function fetchAnalytics() {
-    try {
-      const res = await fetch("/api/analytics");
-      const data = await res.json();
-      if (res.ok) {
-        setStats({
-          revenue: data.revenue || 0,
-          activeOrders: data.activeOrders || 0,
-          totalProjects: data.totalProjects || 0,
-          totalMembers: data.totalMembers || 0,
-          completionRate: data.completionRate || 0,
-          cancelledRate: data.cancelledRate || 0,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to fetch analytics:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchAnalytics();
-    const interval = setInterval(fetchAnalytics, 60000); // Polling every 60s
-    return () => clearInterval(interval);
-  }, []);
+  const handleProjectCreated = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all });
+  };
 
   return (
     <SidebarProvider>
@@ -208,7 +180,7 @@ export default function Dashboard() {
                 className="lg:col-span-8 space-y-4 sm:space-y-6"
                 variants={itemVariants}
               >
-                <ProjectTable refreshTrigger={refreshTrigger} />
+                <ProjectTable />
                 <RevenueChart />
               </motion.div>
 

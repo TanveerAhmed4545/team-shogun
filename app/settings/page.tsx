@@ -10,71 +10,87 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Bell, Save, ShieldCheck, Key, MonitorSmartphone, AlertTriangle, LogOut, Check
+  Bell, Save, ShieldCheck, Key, MonitorSmartphone, AlertTriangle, LogOut
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queries/keys";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"preferences" | "security" | "sessions">("preferences");
 
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
     deadlineAlerts: true,
   });
-  const [saving, setSaving] = useState(false);
   const [passwords, setPasswords] = useState({ current: "", newPass: "", confirm: "" });
-  const [savingPassword, setSavingPassword] = useState(false);
 
+  // Fetch User Preferences [qk-hierarchical-organization]
+  const { data: userData } = useQuery({
+    queryKey: queryKeys.users.profile(session?.user?.id || ""),
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${session?.user?.id}`);
+      const json = await res.json();
+      return json.data.user;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  // Sync preferences local state
   useEffect(() => {
-    async function fetchUser() {
-      if (!(session?.user as any)?.id) return;
-      try {
-        const res = await fetch(`/api/users/${(session?.user as any)?.id}`);
-        const json = await res.json();
-        if (json.success && json.data?.user?.preferences) {
-          setPreferences(json.data.user.preferences);
-        }
-      } catch (err) { console.error("Error fetching user data", err); }
+    if (userData?.preferences) {
+      setTimeout(() => setPreferences(userData.preferences), 0);
     }
-    fetchUser();
-  }, [session]);
+  }, [userData]);
 
-  const handleSavePreferences = async () => {
-    if (!(session?.user as any)?.id) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/users/${(session?.user as any)?.id}`, {
+  // Mutation for Preferences [mut-invalidate-queries]
+  const prefMutation = useMutation({
+    mutationFn: async (newPrefs: any) => {
+      const res = await fetch(`/api/users/${session?.user?.id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferences }),
+        body: JSON.stringify({ preferences: newPrefs }),
       });
-      if (res.ok) toast.success("Preferences updated successfully");
-      else toast.error("Failed to save preferences");
-    } catch { toast.error("Network error"); }
-    finally { setSaving(false); }
+      if (!res.ok) throw new Error("Failed to save");
+      return newPrefs;
+    },
+    onSuccess: () => {
+      toast.success("Preferences updated successfully");
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+    },
+    onError: () => toast.error("Failed to save preferences"),
+  });
+
+  // Mutation for Password Change [mut-error-handling]
+  const passwordMutation = useMutation({
+    mutationFn: async (pwdData: any) => {
+      const res = await fetch(`/api/users/${session?.user?.id}/password`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pwdData),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update");
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Password updated successfully");
+      setPasswords({ current: "", newPass: "", confirm: "" });
+    },
+    onError: (error: any) => toast.error(error.message),
+  });
+
+  const handleSavePreferences = () => {
+    prefMutation.mutate(preferences);
   };
 
-  const handlePasswordChange = async () => {
+  const handlePasswordChange = () => {
     if (!passwords.current || !passwords.newPass) return toast.error("All fields are required");
     if (passwords.newPass !== passwords.confirm) return toast.error("Passwords do not match");
     if (passwords.newPass.length < 6) return toast.error("Password must be at least 6 characters");
     
-    setSavingPassword(true);
-    try {
-      const res = await fetch(`/api/users/${(session?.user as any)?.id}/password`, {
-        method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword: passwords.current, newPassword: passwords.newPass }),
-      });
-      if (res.ok) {
-        toast.success("Password updated successfully");
-        setPasswords({ current: "", newPass: "", confirm: "" });
-      } else {
-        const err = await res.json();
-        toast.error(err.message || "Failed to update password");
-      }
-    } catch { toast.error("Network error"); }
-    finally { setSavingPassword(false); }
+    passwordMutation.mutate({ currentPassword: passwords.current, newPassword: passwords.newPass });
   };
 
   // Password strength visualizer (Basic)
@@ -174,8 +190,8 @@ export default function SettingsPage() {
                           </div>
 
                           <div className="pt-6 border-t border-white/[0.04]">
-                            <Button onClick={handleSavePreferences} disabled={saving} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-11 px-6 shadow-lg shadow-emerald-500/20">
-                              <Save className="w-4 h-4 mr-2" /> {saving ? "Saving..." : "Save Preferences"}
+                            <Button onClick={handleSavePreferences} disabled={prefMutation.isPending} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-11 px-6 shadow-lg shadow-emerald-500/20">
+                              <Save className="w-4 h-4 mr-2" /> {prefMutation.isPending ? "Saving..." : "Save Preferences"}
                             </Button>
                           </div>
                         </CardContent>
@@ -221,8 +237,8 @@ export default function SettingsPage() {
                               <Input type="password" value={passwords.confirm} onChange={e => setPasswords({...passwords, confirm: e.target.value})} className="bg-white/[0.03] border-white/[0.06] rounded-xl h-12" />
                             </div>
 
-                            <Button onClick={handlePasswordChange} disabled={savingPassword} className="bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl h-11 w-full mt-4">
-                              {savingPassword ? "Updating Securely..." : "Update Password"}
+                            <Button onClick={handlePasswordChange} disabled={passwordMutation.isPending} className="bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl h-11 w-full mt-4">
+                              {passwordMutation.isPending ? "Updating Securely..." : "Update Password"}
                             </Button>
                           </div>
                         </CardContent>

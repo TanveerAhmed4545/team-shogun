@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import { DashboardSidebar, SidebarProvider } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,12 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Users,
-  Mail,
-  ShieldCheck,
-  TrendingUp,
-  UserPlus,
   MoreHorizontal,
-  Star,
   CheckCircle2,
   XCircle,
   Shield,
@@ -30,82 +26,31 @@ import {
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
+import { useUsers, useUpdateUser, useDeleteUser, TeamMember } from "@/hooks/useUsers";
+
 export default function TeamPage() {
   const { data: session, update } = useSession();
-  const [members, setMembers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showPending, setShowPending] = useState(false);
   
   const isAdmin = session?.user?.role === "admin";
 
-  useEffect(() => {
-    async function fetchTeam() {
-      try {
-        const res = await fetch("/api/users");
-        const json = await res.json();
-        if (json.success && json.data?.users) {
-          setMembers(json.data.users);
-        }
-      } catch (error) {
-        console.error("Failed to fetch team:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchTeam();
-  }, []);
+  // Modularized Hooks [hook-abstraction]
+  const { data: members = [], isLoading: loading } = useUsers();
+  const updateMutation = useUpdateUser();
+  const deleteMutation = useDeleteUser();
 
-  const handleStatusUpdate = async (userId: string, newStatus: string) => {
-    setMembers((prev) =>
-      prev.map((m) => (m._id === userId ? { ...m, status: newStatus } : m))
-    );
-    try {
-      const res = await fetch(`/api/users/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) {
-        toast.success(`Member ${newStatus}`);
-        if (userId === session?.user?.id) {
-          await update({ ...session, user: { ...session.user, status: newStatus } });
-        }
-      }
-      else toast.error("Failed to update");
-    } catch {
-      toast.error("Network error");
-    }
+  const handleStatusUpdate = (userId: string, newStatus: string) => {
+    updateMutation.mutate({ userId, data: { status: newStatus } });
   };
 
-  const handleRoleUpdate = async (userId: string, newRole: string) => {
-    setMembers((prev) =>
-      prev.map((m) => (m._id === userId ? { ...m, role: newRole } : m))
-    );
-    try {
-      const res = await fetch(`/api/users/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole }),
-      });
-      if (res.ok) {
-        toast.success(`Role → ${newRole}`);
-        if (userId === session?.user?.id) {
-          await update({ ...session, user: { ...session.user, role: newRole } });
-        }
-      }
-    } catch {
-      toast.error("Failed to update role");
-    }
+  const handleRoleUpdate = (userId: string, newRole: string) => {
+    updateMutation.mutate({ userId, data: { role: newRole } });
   };
 
-  const handleDelete = async (userId: string) => {
-    if (!confirm("Remove this team member?")) return;
-    setMembers((prev) => prev.filter((m) => m._id !== userId));
-    try {
-      await fetch(`/api/users/${userId}`, { method: "DELETE" });
-      toast.success("Member removed");
-    } catch {
-      toast.error("Failed to remove");
+  const handleDelete = (userId: string) => {
+    if (confirm("Remove this team member?")) {
+      deleteMutation.mutate(userId);
     }
   };
 

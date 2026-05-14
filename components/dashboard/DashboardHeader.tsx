@@ -42,7 +42,7 @@ export function DashboardHeader() {
   };
 
   useEffect(() => {
-    fetchNotifications();
+    setTimeout(() => fetchNotifications(), 0);
   }, []);
 
   return (
