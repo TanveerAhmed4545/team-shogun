@@ -4,7 +4,18 @@
   A production-grade, full-stack SaaS platform designed specifically for tracking, managing, and scaling a high-volume Fiverr Agency team. Built with modern web architecture to provide a stunning, glassmorphic UI alongside robust operational tools.
 </p>
 
+<p align="center">
+  <strong>Created by Tanveer Ahmed</strong>
+</p>
+
 ---
+
+## 🚀 Recent Core Upgrades (Production v2.0)
+- **⚡ Real-Time Status Sync**: Integrated Pusher for live, cross-device dashboard updates.
+- **📜 Activity Audit Logs**: Full accountability with a persistent history of every administrative action.
+- **🎨 Modern UI/UX**: Professional skeleton loading states and optimized Next.js image handling for 90+ Lighthouse scores.
+- **🔍 Command Center Search**: Global `Ctrl + K` navigation for high-speed operation.
+
 
 ## 🌟 Key Features
 
@@ -101,3 +112,9 @@ Feel free to check the [issues page](https://github.com/your-username/team-shogu
 
 ## 📄 License
 This project is proprietary and confidential. Unauthorized copying of this file, via any medium, is strictly prohibited.
+
+---
+
+<p align="center">
+  Developed with ❤️ by <strong>Tanveer Ahmed</strong>
+</p>
