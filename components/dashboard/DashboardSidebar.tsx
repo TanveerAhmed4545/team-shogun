@@ -24,7 +24,6 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
   { icon: Briefcase, label: "Projects", href: "/projects" },
   { icon: Users, label: "Team", href: "/team" },
-  { icon: DollarSign, label: "Finance", href: "/finance" },
   { icon: Bell, label: "Notifications", href: "/notifications" },
   { icon: UserCircle, label: "Profile", href: "/profile" },
   { icon: Settings, label: "Settings", href: "/settings" },
