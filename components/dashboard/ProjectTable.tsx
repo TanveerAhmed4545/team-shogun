@@ -44,9 +44,9 @@ export function ProjectTable({ refreshTrigger }: { refreshTrigger?: number }) {
     async function fetchProjects() {
       try {
         const res = await fetch("/api/projects");
-        const data = await res.json();
-        if (data.projects) {
-          setProjects(data.projects.slice(0, 6));
+        const json = await res.json();
+        if (json.success && json.data) {
+          setProjects(json.data.slice(0, 6));
         }
       } catch (error) {
         console.error("Failed to fetch projects:", error);

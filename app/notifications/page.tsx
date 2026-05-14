@@ -38,8 +38,10 @@ export default function NotificationsPage() {
     async function fetchNotifications() {
       try {
         const res = await fetch("/api/notifications");
-        const data = await res.json();
-        if (data.notifications) setNotifications(data.notifications);
+        const json = await res.json();
+        if (json.success && json.data?.notifications) {
+          setNotifications(json.data.notifications);
+        }
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     }

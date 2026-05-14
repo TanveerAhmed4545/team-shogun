@@ -88,9 +88,9 @@ export function EditProjectModal({
     async function fetchDevs() {
       try {
         const res = await fetch("/api/users");
-        const data = await res.json();
-        if (data.users) {
-          setDevelopers(data.users.filter((u: any) => u.status === "active"));
+        const json = await res.json();
+        if (json.success && json.data?.users) {
+          setDevelopers(json.data.users.filter((u: any) => u.status === "active"));
         }
       } catch (e) {
         console.error(e);

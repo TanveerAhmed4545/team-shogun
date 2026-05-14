@@ -42,19 +42,20 @@ export default function ProfilePage() {
       if (!(session?.user as any)?.id) return;
       try {
         const res = await fetch(`/api/users/${(session?.user as any)?.id}`);
-        const data = await res.json();
-        if (data.user) {
+        const json = await res.json();
+        if (json.success && json.data?.user) {
+          const user = json.data.user;
           setProfile({
-            ...data.user,
-            skills: data.user.skills || [],
-            role: data.user.role || "member",
-            performance_score: data.user.performance_score || 0,
-            total_earnings: data.user.total_earnings || 0,
-            projects_completed: data.user.projects_completed || 0,
-            on_time_delivery: data.user.on_time_delivery || 100,
+            ...user,
+            skills: user.skills || [],
+            role: user.role || "member",
+            performance_score: user.performance_score || 0,
+            total_earnings: user.total_earnings || 0,
+            projects_completed: user.projects_completed || 0,
+            on_time_delivery: user.on_time_delivery || 100,
           });
-          if (data.user.avatar) setAvatarPreview(data.user.avatar);
-          if (data.user.coverPhoto) setCoverPreview(data.user.coverPhoto);
+          if (user.avatar) setAvatarPreview(user.avatar);
+          if (user.coverPhoto) setCoverPreview(user.coverPhoto);
         }
       } catch (err) {
         console.error("Error fetching user data", err);

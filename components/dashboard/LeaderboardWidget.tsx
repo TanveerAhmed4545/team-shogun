@@ -19,9 +19,9 @@ export function LeaderboardWidget() {
     async function fetchLeaders() {
       try {
         const res = await fetch("/api/users");
-        const data = await res.json();
-        if (data.users) {
-          const sorted = [...data.users]
+        const json = await res.json();
+        if (json.success && json.data?.users) {
+          const sorted = [...json.data.users]
             .filter((u: any) => u.status === "active")
             .sort((a: any, b: any) => (b.performance_score || 0) - (a.performance_score || 0))
             .slice(0, 5);

@@ -58,12 +58,12 @@ export default function RevenueTargetsPage() {
     async function fetchMembers() {
       try {
         const res = await fetch("/api/users");
-        const data = await res.json();
-        if (data.users) {
-          setMembers(data.users);
+        const json = await res.json();
+        if (json.success && json.data?.users) {
+          setMembers(json.data.users);
           // Initialize edited targets with current values
           const targets: Record<string, number> = {};
-          data.users.forEach((m: TeamMember) => {
+          json.data.users.forEach((m: TeamMember) => {
             targets[m._id] = m.preferences?.monthlyTarget || 10000;
           });
           setEditedTargets(targets);

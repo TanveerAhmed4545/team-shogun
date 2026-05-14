@@ -46,10 +46,10 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
     async function fetchDevs() {
       try {
         const res = await fetch("/api/users");
-        const data = await res.json();
-        if (data.users) {
+        const json = await res.json();
+        if (json.success && json.data?.users) {
           setDevelopers(
-            data.users.filter((u: any) => u.status === "active")
+            json.data.users.filter((u: any) => u.status === "active")
           );
         }
       } catch (e) {

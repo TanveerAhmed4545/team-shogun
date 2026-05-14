@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
 import dbConnect from "@/lib/db";
 import Notification from "@/models/Notification";
+import { ApiResponse } from "@/lib/utils/api-response";
 
 export async function GET() {
   try {
@@ -22,8 +23,8 @@ export async function GET() {
     }
 
     const notifications = await Notification.find(query).sort({ createdAt: -1 }).limit(30);
-    return NextResponse.json({ notifications }, { status: 200 });
+    return ApiResponse.success({ notifications });
   } catch (error) {
-    return NextResponse.json({ notifications: [] }, { status: 200 });
+    return ApiResponse.success({ notifications: [] }, "Could not fetch notifications");
   }
 }

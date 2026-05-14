@@ -33,8 +33,10 @@ export default function SettingsPage() {
       if (!(session?.user as any)?.id) return;
       try {
         const res = await fetch(`/api/users/${(session?.user as any)?.id}`);
-        const data = await res.json();
-        if (data.user?.preferences) setPreferences(data.user.preferences);
+        const json = await res.json();
+        if (json.success && json.data?.user?.preferences) {
+          setPreferences(json.data.user.preferences);
+        }
       } catch (err) { console.error("Error fetching user data", err); }
     }
     fetchUser();

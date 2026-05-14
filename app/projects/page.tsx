@@ -81,9 +81,9 @@ export default function ProjectsPage() {
     async function fetchProjects() {
       try {
         const res = await fetch("/api/projects");
-        const data = await res.json();
-        if (data.projects) {
-          setProjects(data.projects);
+        const json = await res.json();
+        if (json.success && json.data) {
+          setProjects(json.data);
         }
       } catch (error) {
         console.error("Failed to fetch projects:", error);

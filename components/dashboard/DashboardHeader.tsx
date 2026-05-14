@@ -30,9 +30,9 @@ export function DashboardHeader() {
     setLoadingNotifs(true);
     try {
       const res = await fetch("/api/notifications");
-      const data = await res.json();
-      if (data.notifications) {
-        setNotifications(data.notifications.slice(0, 4));
+      const json = await res.json();
+      if (json.success && json.data?.notifications) {
+        setNotifications(json.data.notifications.slice(0, 4));
       }
     } catch (error) {
       console.error("Failed to fetch notifications", error);

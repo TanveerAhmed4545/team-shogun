@@ -42,9 +42,9 @@ export default function TeamPage() {
     async function fetchTeam() {
       try {
         const res = await fetch("/api/users");
-        const data = await res.json();
-        if (data.users) {
-          setMembers(data.users);
+        const json = await res.json();
+        if (json.success && json.data?.users) {
+          setMembers(json.data.users);
         }
       } catch (error) {
         console.error("Failed to fetch team:", error);

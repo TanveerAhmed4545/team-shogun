@@ -38,9 +38,9 @@ export function RecentActivity() {
     async function fetchActivities() {
       try {
         const res = await fetch("/api/activities");
-        const data = await res.json();
-        if (data.activities) {
-          setActivities(data.activities);
+        const json = await res.json();
+        if (json.success && json.data?.activities) {
+          setActivities(json.data.activities);
         }
       } catch (error) {
         console.error("Failed to fetch activities:", error);
