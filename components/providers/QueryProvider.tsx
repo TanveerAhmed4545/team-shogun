@@ -35,12 +35,15 @@ function getQueryClient() {
   }
 }
 
-export default function QueryProvider({ children }: { children: React.ReactNode }) {
-  // Initialize Real-time Sync [rt-init]
+function RealtimeSyncInitializer() {
   useRealtimeSync();
+  return null;
+}
 
+export default function QueryProvider({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={getQueryClient()}>
+      <RealtimeSyncInitializer />
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

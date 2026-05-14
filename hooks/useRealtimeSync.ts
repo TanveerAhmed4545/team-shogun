@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { pusherClient } from "@/lib/pusher";
+import { getPusherClient } from "@/lib/pusher";
 import { queryKeys } from "@/lib/queries/keys";
 import toast from "react-hot-toast";
 
@@ -8,6 +8,9 @@ export function useRealtimeSync() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    const pusherClient = getPusherClient();
+    if (!pusherClient) return;
+
     // 1. Subscribe to the relevant channels
     const projectChannel = pusherClient.subscribe("projects-channel");
     const analyticsChannel = pusherClient.subscribe("analytics-channel");
@@ -41,9 +44,11 @@ export function useRealtimeSync() {
 
     // Cleanup on unmount
     return () => {
-      pusherClient.unsubscribe("projects-channel");
-      pusherClient.unsubscribe("analytics-channel");
-      pusherClient.unsubscribe("team-channel");
+      if (pusherClient) {
+        pusherClient.unsubscribe("projects-channel");
+        pusherClient.unsubscribe("analytics-channel");
+        pusherClient.unsubscribe("team-channel");
+      }
     };
   }, [queryClient]);
 }

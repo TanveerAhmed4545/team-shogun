@@ -4,7 +4,9 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Project from "@/models/Project";
 import Activity from "@/models/Activity";
-import { pusherServer } from "@/lib/pusher";
+const { pusherServer } = require("@/lib/pusher");
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req, { params }) {
   try {
