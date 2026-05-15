@@ -38,11 +38,12 @@ export async function GET() {
         .reduce((sum, p) => sum + (p.value || 0), 0);
 
       const target = user.preferences?.monthlyTarget || 1100;
-      const totalActive = wip + delivered; // WIP + Delivered as per user screenshot
+      const totalActive = wip + delivered;
       const need = target - totalActive;
 
-      const completedCount = userProjects.filter(p => p.orderStatus === "Delivered" || p.orderStatus === "Completed").length;
-      const stars = completedCount; // Stars based on completed projects
+      const completedProjects = userProjects.filter(p => p.orderStatus === "Delivered" || p.orderStatus === "Completed");
+      const completedCount = completedProjects.length;
+      const stars = completedProjects.reduce((sum, p) => sum + (p.star || 0), 0);
 
       return {
         _id: user._id,
