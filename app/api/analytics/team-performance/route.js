@@ -43,7 +43,7 @@ export async function GET() {
 
       const completedProjects = userProjects.filter(p => p.orderStatus === "Delivered" || p.orderStatus === "Completed");
       const completedCount = completedProjects.length;
-      const stars = completedProjects.reduce((sum, p) => sum + (p.star || 0), 0);
+      const stars = completedProjects.filter(p => p.star === 5).length; // Count of 5-star projects
 
       return {
         _id: user._id,
