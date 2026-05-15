@@ -16,7 +16,32 @@ export async function GET(req, { params }) {
     const user = await userService.getUserById(id);
     if (!user) return ApiResponse.notFound("User not found");
 
-    return ApiResponse.success({ user });
+    // Calculate dynamic stats from projects [qk-include-dependencies]
+    const Project = (await import("@/models/Project")).default;
+    const projects = await Project.find({
+      $or: [
+        { "developer.id": id },
+        { "developer.name": user.name }
+      ]
+    });
+
+    const wip = projects
+      .filter(p => p.orderStatus === "WIP" || p.orderStatus === "Revision")
+      .reduce((sum, p) => sum + (p.value || 0), 0);
+        
+    const delivered = projects
+      .filter(p => p.orderStatus === "Delivered" || p.orderStatus === "Completed")
+      .reduce((sum, p) => sum + (p.value || 0), 0);
+
+    const completedProjects = projects.filter(p => p.orderStatus === "Delivered" || p.orderStatus === "Completed");
+    const completedCount = completedProjects.length;
+
+    const userObj = user.toObject();
+    userObj.projects_completed = completedCount;
+    userObj.total_earnings = delivered;
+    userObj.performance_score = Math.round((wip + delivered) / 10);
+
+    return ApiResponse.success({ user: userObj });
   } catch (error) {
     console.error("User GET Error:", error);
     return ApiResponse.error();

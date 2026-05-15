@@ -39,6 +39,24 @@ export default function ProfilePage() {
     enabled: !!session?.user?.id,
   });
 
+  // Real-time synchronization [rt-sync-effect]
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    
+    const { getPusherClient } = require("@/lib/pusher");
+    const pusher = getPusherClient();
+    const channel = pusher.subscribe("projects-channel");
+    
+    channel.bind("project-updated", () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.profile(session.user.id) });
+    });
+
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+    };
+  }, [session?.user?.id, queryClient]);
+
   // Local state for editing [file-separation]
   const [profile, setProfile] = useState<any>(null);
   const [avatarPreview, setAvatarPreview] = useState("");
