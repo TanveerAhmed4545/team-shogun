@@ -19,7 +19,10 @@ export async function GET() {
     const projects = await Project.find({});
 
     const performanceData = users.map(user => {
-      const userProjects = projects.filter(p => p.developer?.id?.toString() === user._id.toString());
+      const userProjects = projects.filter(p => 
+        p.developer?.id?.toString() === user._id.toString() || 
+        (p.developer?.name && p.developer.name === user.name)
+      );
       
       const wip = userProjects
         .filter(p => p.orderStatus === "WIP" || p.orderStatus === "Revision")
@@ -37,6 +40,8 @@ export async function GET() {
       const totalActive = wip + delivered; // WIP + Delivered as per user screenshot
       const need = target - totalActive;
 
+      const completedCount = userProjects.filter(p => p.orderStatus === "Delivered" || p.orderStatus === "Completed").length;
+
       return {
         _id: user._id,
         name: user.name,
@@ -47,7 +52,9 @@ export async function GET() {
         totalActive,
         target,
         need,
-        stars: user.stars || 0
+        stars: user.stars || 0,
+        projectCount: userProjects.length,
+        completedCount
       };
     });
 
@@ -58,7 +65,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: {
-        performance: performanceData,
+        performance: sorted,
         topPerformer,
         totalWip: performanceData.reduce((sum, d) => sum + d.wip, 0),
         totalCancelled: performanceData.reduce((sum, d) => sum + d.cancelled, 0),

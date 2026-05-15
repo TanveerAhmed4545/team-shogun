@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
+import { ExportButton } from "@/components/dashboard/ExportButton";
 import dynamic from "next/dynamic";
 import { DashboardSidebar, SidebarProvider } from "@/components/dashboard/DashboardSidebar";
 import { KPICard } from "@/components/dashboard/KPICard";
@@ -112,11 +113,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <Link href="/finance" className="flex-1 sm:flex-none">
-                  <button className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-md text-sm font-bold hover:bg-white/[0.06] transition-all text-white/50 hover:text-white/80">
-                    Export Data
-                  </button>
-                </Link>
+                <ExportButton />
                 <div className="flex-1 sm:flex-none">
                   <ProjectModal onSuccess={handleProjectCreated} />
                 </div>

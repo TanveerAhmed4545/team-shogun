@@ -102,8 +102,10 @@ export default function NotificationsPage() {
       <div className="flex min-h-screen mesh-bg text-white">
         <DashboardSidebar />
         <main className="flex-1 flex flex-col relative overflow-x-hidden min-w-0">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 blur-[120px] rounded-full -z-10 animate-pulse-slow" />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] rounded-full -z-10" />
           <DashboardHeader />
-          <div className="p-4 sm:p-6 lg:p-10 max-w-6xl mx-auto w-full space-y-6">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-6">
             
             {/* Header Area */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">

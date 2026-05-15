@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
 import Image from "next/image";
 import { DashboardSidebar, SidebarProvider } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -11,11 +12,16 @@ import { Trophy, Star, Crown } from "lucide-react";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from "recharts";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
+import { getPusherClient } from "@/lib/pusher";
 
 export default function LeaderboardPage() {
+  const queryClient = useQueryClient();
+
   const { data: performanceData, isLoading: loading } = useQuery({
     queryKey: queryKeys.performance.list(),
     queryFn: async () => {
@@ -24,8 +30,24 @@ export default function LeaderboardPage() {
       if (!json.success) throw new Error(json.message || "Failed to fetch");
       return json.data;
     },
-    refetchInterval: 60000, // Sync every minute [cache-stale-time]
+    refetchInterval: 300000, // Reduced polling since we have real-time sync
   });
+
+  // Real-time synchronization [rt-sync-effect]
+  useEffect(() => {
+    const pusher = getPusherClient();
+    const channel = pusher.subscribe("projects-channel");
+    
+    channel.bind("project-updated", () => {
+      // Invalidate performance data when any project changes
+      queryClient.invalidateQueries({ queryKey: queryKeys.performance.list() });
+    });
+
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+    };
+  }, [queryClient]);
 
   if (loading) {
     return (
@@ -62,7 +84,7 @@ export default function LeaderboardPage() {
         <DashboardSidebar />
         <main className="flex-1 flex flex-col relative overflow-x-hidden min-w-0">
           <DashboardHeader />
-          <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-8">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-8">
             
             {/* Header Area */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -86,9 +108,12 @@ export default function LeaderboardPage() {
                    <div className="absolute top-0 right-0 p-2">
                      <Crown className="w-5 h-5 text-amber-500/40" />
                    </div>
-                   <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-amber-500/30 relative">
-                     <Image src={data.topPerformer.avatar || `https://ui-avatars.com/api/?name=${data.topPerformer.name}&background=random`} alt="Top" fill className="object-cover" />
-                   </div>
+                    <Avatar className="w-16 h-16 rounded-2xl border-2 border-amber-500/30">
+                      <AvatarImage src={data.topPerformer.avatar} alt={data.topPerformer.name} className="object-cover" />
+                      <AvatarFallback className="bg-amber-500/10 text-amber-500 font-black text-xl">
+                        {getInitials(data.topPerformer.name)}
+                      </AvatarFallback>
+                    </Avatar>
                    <div>
                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500 mb-1">Top Performer</p>
                      <h3 className="text-xl font-black text-white">{data.topPerformer.name}</h3>
@@ -119,9 +144,12 @@ export default function LeaderboardPage() {
                       <tr key={member._id} className="hover:bg-white/[0.01] transition-colors group">
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 relative">
-                              <Image src={member.avatar || `https://ui-avatars.com/api/?name=${member.name}`} alt={member.name} fill className="object-cover" />
-                            </div>
+                            <Avatar className="w-9 h-9 rounded-xl border border-white/10 shrink-0">
+                              <AvatarImage src={member.avatar} alt={member.name} className="object-cover" />
+                              <AvatarFallback className="bg-emerald-500/10 text-emerald-500 font-black text-xs">
+                                {getInitials(member.name)}
+                              </AvatarFallback>
+                            </Avatar>
                             <span className="font-bold text-white group-hover:text-emerald-500 transition-colors">{member.name}</span>
                           </div>
                         </td>
@@ -150,8 +178,14 @@ export default function LeaderboardPage() {
                       <td className="px-6 py-6 text-rose-500/60">${data?.totalCancelled.toLocaleString()}</td>
                       <td className="px-6 py-6 text-emerald-500">${data?.totalDelivered.toLocaleString()}</td>
                       <td className="px-6 py-6 text-white text-lg">${data?.totalActiveAll.toLocaleString()}</td>
-                      <td className="px-6 py-6 text-white/20">--</td>
-                      <td className="px-6 py-6 text-white/20">--</td>
+                      <td className="px-6 py-6 text-white/20">
+                        ${data?.performance.reduce((sum: number, m: any) => sum + m.target, 0).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-6 text-white/20">
+                        <Badge className="bg-white/5 text-white/40 border-white/10 font-black text-[10px]">
+                          ${data?.performance.reduce((sum: number, m: any) => sum + m.need, 0).toLocaleString()} Total Need
+                        </Badge>
+                      </td>
                       <td className="px-6 py-6 text-amber-500 text-center">{data?.totalStars}</td>
                     </tr>
                   </tbody>

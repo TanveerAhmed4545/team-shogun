@@ -4,23 +4,37 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
 
-export function RevenueChart() {
-  const [data, setData] = useState<any[]>([]);
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queries/keys";
+import { getPusherClient } from "@/lib/pusher";
 
+export function RevenueChart() {
+  const queryClient = useQueryClient();
+
+  const { data = [], isLoading } = useQuery<any[]>({
+    queryKey: [...queryKeys.analytics.all, "monthly"],
+    queryFn: async () => {
+      const res = await fetch("/api/analytics");
+      const analytics = await res.json();
+      return analytics.monthlyRevenue || [];
+    },
+    staleTime: 60000,
+  });
+
+  // Real-time synchronization [rt-sync-effect]
   useEffect(() => {
-    async function fetchAnalytics() {
-      try {
-        const res = await fetch("/api/analytics");
-        const analytics = await res.json();
-        if (analytics.monthlyRevenue && analytics.monthlyRevenue.length > 0) {
-          setData(analytics.monthlyRevenue);
-        }
-      } catch (e) {
-        console.error("Failed to fetch monthly revenue:", e);
-      }
-    }
-    fetchAnalytics();
-  }, []);
+    const pusher = getPusherClient();
+    const channel = pusher.subscribe("projects-channel");
+    
+    channel.bind("project-updated", () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all });
+    });
+
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+    };
+  }, [queryClient]);
   return (
     <Card className="glass-card col-span-4">
       <CardHeader>

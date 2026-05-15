@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, TrendingUp, Medal } from "lucide-react";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queries/keys";
+import { getPusherClient } from "@/lib/pusher";
+
 interface LeaderEntry {
   _id: string;
   name: string;
@@ -13,26 +17,42 @@ interface LeaderEntry {
 }
 
 export function LeaderboardWidget() {
-  const [leaders, setLeaders] = useState<LeaderEntry[]>([]);
+  const queryClient = useQueryClient();
 
+  const { data: leaders = [], isLoading } = useQuery<LeaderEntry[]>({
+    queryKey: queryKeys.performance.list(),
+    queryFn: async () => {
+      const res = await fetch("/api/analytics/team-performance");
+      const json = await res.json();
+      if (!json.success) throw new Error("Failed to fetch");
+      
+      return json.data.performance
+        .slice(0, 5)
+        .map((m: any) => ({
+          _id: m._id,
+          name: m.name,
+          performance_score: Math.round(m.totalActive / 10),
+          total_earnings: m.delivered,
+          projects_completed: m.completedCount
+        }));
+    },
+    staleTime: 60000,
+  });
+
+  // Real-time synchronization [rt-sync-effect]
   useEffect(() => {
-    async function fetchLeaders() {
-      try {
-        const res = await fetch("/api/users");
-        const json = await res.json();
-        if (json.success && json.data?.users) {
-          const sorted = [...json.data.users]
-            .filter((u: any) => u.status === "active")
-            .sort((a: any, b: any) => (b.performance_score || 0) - (a.performance_score || 0))
-            .slice(0, 5);
-          setLeaders(sorted);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    fetchLeaders();
-  }, []);
+    const pusher = getPusherClient();
+    const channel = pusher.subscribe("projects-channel");
+    
+    channel.bind("project-updated", () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.performance.list() });
+    });
+
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+    };
+  }, [queryClient]);
 
   const medalColors = [
     "from-amber-400 to-amber-600",
