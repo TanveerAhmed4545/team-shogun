@@ -27,6 +27,32 @@ export function DashboardHeader() {
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<{projects: any[], users: any[], navigation: any[]}>({projects: [], users: [], navigation: []});
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults({projects: [], users: [], navigation: []});
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+        const json = await res.json();
+        if (json.success) {
+          setSearchResults(json.data);
+        }
+      } catch (error) {
+        console.error("Search failed", error);
+      } finally {
+        setSearching(false);
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const fetchNotifications = async () => {
     setLoadingNotifs(true);
@@ -116,6 +142,71 @@ export function DashboardHeader() {
             <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-[9px] font-black text-white/30 group-focus-within:opacity-0 transition-opacity">
               <span className="text-[10px]">⌘</span>K
             </div>
+
+            {/* Search Dropdown */}
+            {searchQuery.trim() && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[#12181F] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+                {searching ? (
+                  <div className="p-4 text-center text-white/40 text-sm flex items-center justify-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Searching...</span>
+                  </div>
+                ) : (searchResults.projects.length === 0 && searchResults.users.length === 0 && searchResults.navigation.length === 0) ? (
+                  <div className="p-4 text-center text-white/40 text-sm">No results found</div>
+                ) : (
+                  <div className="max-h-[300px] overflow-y-auto p-2 space-y-2">
+                    {searchResults.navigation.length > 0 && (
+                      <div>
+                        <div className="text-[10px] font-black uppercase tracking-wider text-white/20 px-2 py-1">Navigation</div>
+                        {searchResults.navigation.map((item: any) => (
+                          <Link href={item.link} key={item.link} onClick={() => setSearchQuery("")}>
+                            <div className="p-2 hover:bg-white/[0.04] rounded-lg cursor-pointer text-sm text-white/70 hover:text-white transition-colors">
+                              {item.title}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {searchResults.projects.length > 0 && (
+                      <div>
+                        <div className="text-[10px] font-black uppercase tracking-wider text-white/20 px-2 py-1">Projects</div>
+                        {searchResults.projects.map((item: any) => (
+                          <Link href={`/projects`} key={item.orderId} onClick={() => setSearchQuery("")}>
+                            <div className="p-2 hover:bg-white/[0.04] rounded-lg cursor-pointer flex justify-between items-center">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-white/90 truncate">{item.clientName}</p>
+                                <p className="text-[10px] text-white/30">{item.orderId}</p>
+                              </div>
+                              <Badge className="text-[9px] uppercase tracking-wider">{item.orderStatus}</Badge>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {searchResults.users.length > 0 && (
+                      <div>
+                        <div className="text-[10px] font-black uppercase tracking-wider text-white/20 px-2 py-1">Team Members</div>
+                        {searchResults.users.map((item: any) => (
+                          <Link href={`/team`} key={item._id} onClick={() => setSearchQuery("")}>
+                            <div className="p-2 hover:bg-white/[0.04] rounded-lg cursor-pointer flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xs font-bold">
+                                {item.name.charAt(0)}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-white/90 truncate">{item.name}</p>
+                                <p className="text-[10px] text-white/30 capitalize">{item.role}</p>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Mobile search icon */}
