@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useSidebar } from "./DashboardSidebar";
 import Image from "next/image";
+import { getPusherClient } from "@/lib/pusher";
 
 export function DashboardHeader() {
   const { data: session } = useSession();
@@ -43,8 +44,38 @@ export function DashboardHeader() {
   };
 
   useEffect(() => {
-    setTimeout(() => fetchNotifications(), 0);
-  }, []);
+    fetchNotifications();
+    
+    if (session?.user?.id) {
+      const pusher = getPusherClient();
+      
+      // Subscribe to user-specific channel
+      const userChannel = pusher.subscribe(`user-${session.user.id}`);
+      userChannel.bind("notification-received", (notif: any) => {
+        setNotifications(prev => [notif, ...prev.slice(0, 3)]);
+      });
+      
+      // Subscribe to admin channel if admin
+      const isAdmin = ((session.user as unknown) as { role?: string })?.role === "admin";
+      let adminChannel: any;
+      
+      if (isAdmin) {
+        adminChannel = pusher.subscribe("admin-channel");
+        adminChannel.bind("notification-received", (notif: any) => {
+          setNotifications(prev => [notif, ...prev.slice(0, 3)]);
+        });
+      }
+      
+      return () => {
+        userChannel.unbind_all();
+        userChannel.unsubscribe();
+        if (isAdmin && adminChannel) {
+          adminChannel.unbind_all();
+          adminChannel.unsubscribe();
+        }
+      };
+    }
+  }, [session]);
 
   // Handle global search shortcut
   useEffect(() => {

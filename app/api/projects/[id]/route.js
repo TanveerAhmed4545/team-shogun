@@ -86,16 +86,43 @@ export async function PUT(req, { params }) {
         const User = (await import("@/models/User")).default;
         
         const admins = await User.find({ role: "admin" });
-        const notificationPromises = admins.map(admin => 
-          Notification.create({
-            userId: admin._id,
+        
+        // Create notifications in DB
+        const notificationsToCreate = admins.map(admin => ({
+          userId: admin._id,
+          title: "Project Status Updated",
+          message: `${session.user.name} changed ${project.orderId} status to ${data.orderStatus}.`,
+          type: "order",
+          link: "/projects"
+        }));
+        
+        // Notify the developer if it's not the one making the change
+        if (project.developer?.id && project.developer.id.toString() !== session.user.id) {
+          notificationsToCreate.push({
+            userId: project.developer.id,
             title: "Project Status Updated",
-            message: `${session.user.name} changed ${project.orderId} status to ${data.orderStatus}.`,
+            message: `${session.user.name} changed your project ${project.orderId} status to ${data.orderStatus}.`,
             type: "order",
             link: "/projects"
-          })
-        );
-        await Promise.all(notificationPromises);
+          });
+        }
+        
+        const createdNotifications = await Notification.insertMany(notificationsToCreate);
+        
+        // Trigger Pusher for developer
+        if (project.developer?.id && project.developer.id.toString() !== session.user.id) {
+          const devNotif = createdNotifications.find(n => n.userId.toString() === project.developer.id.toString());
+          if (devNotif) {
+            await pusherServer.trigger(`user-${project.developer.id}`, "notification-received", devNotif);
+          }
+        }
+        
+        // Trigger Pusher for admins (one event for all admins)
+        const adminNotif = createdNotifications.find(n => admins.some(a => a._id.toString() === n.userId.toString()));
+        if (adminNotif) {
+          await pusherServer.trigger("admin-channel", "notification-received", adminNotif);
+        }
+        
       } catch (notifErr) {
         console.error("Failed to create notifications:", notifErr);
       }
