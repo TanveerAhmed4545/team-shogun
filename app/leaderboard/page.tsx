@@ -23,7 +23,7 @@ export default function LeaderboardPage() {
   const queryClient = useQueryClient();
 
   const { data: performanceData, isLoading: loading, isError, error } = useQuery({
-    queryKey: queryKeys.performance.list(),
+    queryKey: queryKeys.performance.summary(),
     queryFn: async () => {
       const res = await fetch("/api/analytics/team-performance");
       const json = await res.json();
@@ -40,7 +40,7 @@ export default function LeaderboardPage() {
     
     channel.bind("project-updated", () => {
       // Invalidate performance data when any project changes
-      queryClient.invalidateQueries({ queryKey: queryKeys.performance.list() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.performance.all });
     });
 
     return () => {
@@ -83,7 +83,7 @@ export default function LeaderboardPage() {
                 <h2 className="text-xl font-black text-white">Performance Sync Failed</h2>
                 <p className="text-sm text-white/40 font-medium">{(error as Error)?.message || "An unexpected error occurred while fetching leaderboard data."}</p>
                 <Button 
-                  onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.performance.list() })}
+                  onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.performance.summary() })}
                   className="mt-4 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl"
                 >
                   Retry Connection
