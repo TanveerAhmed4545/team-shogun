@@ -46,7 +46,8 @@ export async function PUT(req, { params }) {
     }
 
     const isAdmin = session.user.role === "admin";
-    const isDeveloper = existingProject.developer?.id?.toString() === session.user.id;
+    const isDeveloper = existingProject.developer?.id?.toString() === session.user.id || 
+                       (existingProject.developer?.name && existingProject.developer.name === session.user.name);
     const isCreator = existingProject.createdBy?.toString() === session.user.id;
 
     if (!isAdmin && !isDeveloper && !isCreator) {
