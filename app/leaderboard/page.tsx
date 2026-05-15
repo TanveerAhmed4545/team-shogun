@@ -158,7 +158,7 @@ export default function LeaderboardPage() {
                        Top Performer <Crown className="w-2.5 h-2.5" />
                      </p>
                      <h3 className="text-2xl font-black text-white tracking-tight">{data.topPerformer.name}</h3>
-                     <p className="text-xs font-bold text-white/40 mt-1">${(data.topPerformer.totalActive || 0).toLocaleString()} Delivered</p>
+                     <p className="text-xs font-bold text-white/40 mt-1">${(data.topPerformer.delivered || 0).toLocaleString()} Delivered</p>
                    </div>
                 </motion.div>
               )}
