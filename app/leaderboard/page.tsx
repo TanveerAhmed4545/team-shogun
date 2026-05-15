@@ -22,7 +22,7 @@ import { getPusherClient } from "@/lib/pusher";
 export default function LeaderboardPage() {
   const queryClient = useQueryClient();
 
-  const { data: performanceData, isLoading: loading } = useQuery({
+  const { data: performanceData, isLoading: loading, isError, error } = useQuery({
     queryKey: queryKeys.performance.list(),
     queryFn: async () => {
       const res = await fetch("/api/analytics/team-performance");
@@ -68,15 +68,43 @@ export default function LeaderboardPage() {
     );
   }
 
+  if (isError) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen mesh-bg text-white">
+          <DashboardSidebar />
+          <main className="flex-1 flex flex-col relative overflow-x-hidden min-w-0">
+            <DashboardHeader />
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-4 p-8 bg-rose-500/10 border border-rose-500/20 rounded-3xl max-w-md text-center">
+                <div className="w-16 h-16 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-500 mb-2">
+                  <Trophy className="w-8 h-8 opacity-20" />
+                </div>
+                <h2 className="text-xl font-black text-white">Performance Sync Failed</h2>
+                <p className="text-sm text-white/40 font-medium">{(error as Error)?.message || "An unexpected error occurred while fetching leaderboard data."}</p>
+                <Button 
+                  onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.performance.list() })}
+                  className="mt-4 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl"
+                >
+                  Retry Connection
+                </Button>
+              </div>
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
   const data = performanceData;
 
-  const chartData = data?.performance.map((d: any) => ({
+  const chartData = data?.performance?.map((d: any) => ({
     name: d.name.split(' ')[0], // Use first name for chart
     WIP: d.wip,
     Canceled: d.cancelled,
     Delivered: d.delivered,
     Total: d.totalActive
-  }));
+  })) || [];
 
   return (
     <SidebarProvider>
@@ -94,30 +122,35 @@ export default function LeaderboardPage() {
                 </Badge>
                 <h1 className="text-4xl sm:text-5xl font-black tracking-[-0.04em]">Elite Force</h1>
                 <p className="text-white/30 mt-2 text-sm font-medium">
-                  {data?.performance.length} active members • {data?.totalStars} total stars earned
+                  {data?.performance?.length || 0} active members • {data?.totalStars || 0} total stars earned
                 </p>
-              </motion.div>
-
-              {/* Top Performer Spotlight */}
+              </motion.div>              {/* Top Performer Spotlight */}
               {data?.topPerformer && (
                 <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }} 
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-gradient-to-br from-amber-500/10 via-amber-500/[0.02] to-transparent border border-amber-500/20 rounded-3xl p-4 flex items-center gap-6 shadow-2xl shadow-amber-500/5 relative overflow-hidden"
+                  initial={{ opacity: 0, x: 20 }} 
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-white/[0.03] backdrop-blur-md border border-white/[0.08] rounded-[2rem] p-5 flex items-center gap-5 shadow-2xl relative overflow-hidden group min-w-[280px]"
                 >
-                   <div className="absolute top-0 right-0 p-2">
-                     <Crown className="w-5 h-5 text-amber-500/40" />
-                   </div>
-                    <Avatar className="w-16 h-16 rounded-2xl border-2 border-amber-500/30">
-                      <AvatarImage src={data.topPerformer.avatar} alt={data.topPerformer.name} className="object-cover" />
-                      <AvatarFallback className="bg-amber-500/10 text-amber-500 font-black text-xl">
-                        {getInitials(data.topPerformer.name)}
-                      </AvatarFallback>
-                    </Avatar>
+                   {/* Animated glow */}
+                   <div className="absolute -right-10 -top-10 w-32 h-32 bg-amber-500/10 blur-[50px] rounded-full group-hover:bg-amber-500/20 transition-all duration-500" />
+                   
+                    <div className="relative">
+                      <Avatar className="w-16 h-16 rounded-2xl border-2 border-amber-500/30 shadow-lg shadow-amber-500/10">
+                        <AvatarImage src={data.topPerformer.avatar} alt={data.topPerformer.name} className="object-cover" />
+                        <AvatarFallback className="bg-amber-500/10 text-amber-500 font-black text-xl">
+                          {getInitials(data.topPerformer.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -top-2 -right-2 bg-amber-500 rounded-lg p-1 shadow-lg">
+                        <Crown className="w-3 h-3 text-[#0B0F14] fill-current" />
+                      </div>
+                    </div>
                    <div>
-                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500 mb-1">Top Performer</p>
-                     <h3 className="text-xl font-black text-white">{data.topPerformer.name}</h3>
-                     <p className="text-xs font-bold text-white/40 mt-0.5">${data.topPerformer.totalActive.toLocaleString()} Delivered</p>
+                     <p className="text-[9px] font-black uppercase tracking-[0.25em] text-amber-500 mb-1 flex items-center gap-1.5">
+                       Top Performer <Crown className="w-2.5 h-2.5" />
+                     </p>
+                     <h3 className="text-2xl font-black text-white tracking-tight">{data.topPerformer.name}</h3>
+                     <p className="text-xs font-bold text-white/40 mt-1">${(data.topPerformer.totalActive || 0).toLocaleString()} Delivered</p>
                    </div>
                 </motion.div>
               )}
@@ -128,19 +161,19 @@ export default function LeaderboardPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[1000px]">
                   <thead>
-                    <tr className="bg-white/[0.02] border-b border-white/[0.05]">
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/30">Developer Name</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/30">WIP</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/30">Canceled</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/30">Delivered</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/30">Total Active</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/30">Target</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/30">Need</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/30 text-center">Stars</th>
+                     <tr className="bg-white/[0.02] border-b border-white/[0.05]">
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-white/30">Developer Name</th>
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-white/30">WIP</th>
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-white/30">Canceled</th>
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-white/30">Delivered</th>
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-white/30">Total Active</th>
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-white/30">Target</th>
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-white/30">Need</th>
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-white/30 text-center">Stars</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.04]">
-                    {data?.performance.map((member: any) => (
+                    {data?.performance?.map((member: any) => (
                       <tr key={member._id} className="hover:bg-white/[0.01] transition-colors group">
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
@@ -153,40 +186,40 @@ export default function LeaderboardPage() {
                             <span className="font-bold text-white group-hover:text-emerald-500 transition-colors">{member.name}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-5 font-bold text-amber-500/80">${member.wip.toLocaleString()}</td>
-                        <td className="px-6 py-5 font-bold text-rose-500/50">${member.cancelled.toLocaleString()}</td>
-                        <td className="px-6 py-5 font-bold text-emerald-500">${member.delivered.toLocaleString()}</td>
-                        <td className="px-6 py-5 font-black text-white">${member.totalActive.toLocaleString()}</td>
-                        <td className="px-6 py-5 font-bold text-white/30">${member.target.toLocaleString()}</td>
-                        <td className="px-6 py-5">
-                          <Badge className={`font-black text-[10px] px-2 py-0.5 rounded-md border ${member.need > 0 ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
-                            {member.need > 0 ? `-$${member.need.toLocaleString()}` : `$${Math.abs(member.need).toLocaleString()} Surplus`}
+                        <td className="px-6 py-5 font-bold text-amber-500/80">${(member.wip || 0).toLocaleString()}</td>
+                        <td className="px-6 py-5 font-bold text-rose-500/50">${(member.cancelled || 0).toLocaleString()}</td>
+                        <td className="px-6 py-5 font-bold text-emerald-500">${(member.delivered || 0).toLocaleString()}</td>
+                        <td className="px-6 py-5 font-black text-white">${(member.totalActive || 0).toLocaleString()}</td>
+                        <td className="px-6 py-5 font-bold text-white/30">${(member.target || 0).toLocaleString()}</td>
+                         <td className="px-6 py-5">
+                          <Badge className={`font-black text-[10px] px-3 py-1 rounded-lg border-none ${member.need > 0 ? 'bg-rose-500/20 text-rose-500' : 'bg-emerald-500/20 text-emerald-500'}`}>
+                            {member.need > 0 ? `-$${(member.need || 0).toLocaleString()}` : `$${Math.abs(member.need || 0).toLocaleString()} Surplus`}
                           </Badge>
                         </td>
                         <td className="px-6 py-5 text-center">
-                          <div className="flex items-center justify-center gap-1 text-amber-500 font-black">
-                            <Star className="w-3 h-3 fill-current" />
+                          <div className="flex items-center justify-center gap-1.5 text-amber-500 font-black">
+                            <Star className="w-3.5 h-3.5 fill-current" />
                             <span>{member.stars}</span>
                           </div>
                         </td>
                       </tr>
                     ))}
                     {/* Summary Row */}
-                    <tr className="bg-emerald-500/[0.03] font-black border-t-2 border-emerald-500/20">
-                      <td className="px-6 py-6 text-emerald-500 uppercase tracking-widest text-[11px]">Total Aggregate</td>
-                      <td className="px-6 py-6 text-emerald-500">${data?.totalWip.toLocaleString()}</td>
-                      <td className="px-6 py-6 text-rose-500/60">${data?.totalCancelled.toLocaleString()}</td>
-                      <td className="px-6 py-6 text-emerald-500">${data?.totalDelivered.toLocaleString()}</td>
-                      <td className="px-6 py-6 text-white text-lg">${data?.totalActiveAll.toLocaleString()}</td>
-                      <td className="px-6 py-6 text-white/20">
-                        ${data?.performance.reduce((sum: number, m: any) => sum + m.target, 0).toLocaleString()}
+                    <tr className="bg-emerald-500/[0.04] font-black border-t border-emerald-500/20">
+                      <td className="px-6 py-7 text-emerald-500 uppercase tracking-[0.25em] text-[10px]">Total Aggregate</td>
+                      <td className="px-6 py-7 text-emerald-500/80">${(data?.totalWip || 0).toLocaleString()}</td>
+                      <td className="px-6 py-7 text-rose-500/60">${(data?.totalCancelled || 0).toLocaleString()}</td>
+                      <td className="px-6 py-7 text-emerald-500">${(data?.totalDelivered || 0).toLocaleString()}</td>
+                      <td className="px-6 py-7 text-white text-xl">${(data?.totalActiveAll || 0).toLocaleString()}</td>
+                      <td className="px-6 py-7 text-white/20">
+                        ${data?.performance?.reduce((sum: number, m: any) => sum + m.target, 0).toLocaleString() || 0}
                       </td>
-                      <td className="px-6 py-6 text-white/20">
-                        <Badge className="bg-white/5 text-white/40 border-white/10 font-black text-[10px]">
-                          ${data?.performance.reduce((sum: number, m: any) => sum + m.need, 0).toLocaleString()} Total Need
+                      <td className="px-6 py-7 text-white/20">
+                        <Badge className="bg-white/5 text-white/40 border border-white/10 font-black text-[10px] px-3 py-1 rounded-lg">
+                          ${data?.performance?.reduce((sum: number, m: any) => sum + m.need, 0).toLocaleString() || 0} Total Need
                         </Badge>
                       </td>
-                      <td className="px-6 py-6 text-amber-500 text-center">{data?.totalStars}</td>
+                      <td className="px-6 py-7 text-amber-500 text-center text-lg">{data?.totalStars}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -233,7 +266,7 @@ export default function LeaderboardPage() {
                   <p className="text-xs text-white/30 mt-1">Contribution by each member</p>
                 </div>
                 <div className="space-y-6 my-8">
-                  {data?.performance.map((member: any) => (
+                  {data?.performance?.map((member: any) => (
                     <div key={member._id} className="space-y-2">
                       <div className="flex justify-between text-[11px] font-black uppercase tracking-wider">
                         <span className="text-white/60">{member.name}</span>

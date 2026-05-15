@@ -12,7 +12,7 @@ export interface Project {
   deadline: string;
   star: number;
   developer?: {
-    id: string;
+    id: any; // Can be string or populated User object
     name: string;
   };
   createdBy: string;

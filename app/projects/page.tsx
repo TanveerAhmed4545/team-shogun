@@ -347,7 +347,11 @@ export default function ProjectsPage() {
                                       <span className="text-[10px] font-bold text-amber-400">{project.star}</span>
                                     </div>
                                   )}
-                                  {(isAdmin || session?.user?.id === project.developer?.id || session?.user?.id === project.createdBy) && (
+                                  {(isAdmin || 
+                                    session?.user?.id === project.developer?.id?._id?.toString() || 
+                                    session?.user?.id === project.developer?.id?.toString() || 
+                                    session?.user?.id === project.createdBy?.toString() ||
+                                    session?.user?.name === project.developer?.name) && (
                                     <Button
                                       variant="ghost"
                                       size="icon"
@@ -433,7 +437,11 @@ export default function ProjectsPage() {
                               <Card
                                 className="bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04] transition-all group cursor-pointer"
                                 onClick={() => {
-                                  if (isAdmin || session?.user?.id === project.developer?.id || session?.user?.id === project.createdBy) {
+                                  if (isAdmin || 
+                                      session?.user?.id === project.developer?.id?._id?.toString() || 
+                                      session?.user?.id === project.developer?.id?.toString() || 
+                                      session?.user?.id === project.createdBy?.toString() ||
+                                      session?.user?.name === project.developer?.name) {
                                     setEditProject(project);
                                     setEditOpen(true);
                                   } else {

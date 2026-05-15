@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Star } from "lucide-react";
 import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
 
 interface EditProjectModalProps {
   project: any;
@@ -33,6 +34,8 @@ export function EditProjectModal({
   onOpenChange,
   onSuccess,
 }: EditProjectModalProps) {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
   const [loading, setLoading] = useState(false);
   const [developers, setDevelopers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -224,23 +227,31 @@ export function EditProjectModal({
               <Label className="text-[9px] uppercase tracking-[0.2em] font-black text-white/20">
                 Developer Name
               </Label>
-              <Select
-                value={formData.developerName}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, developerName: val ?? "" })
-                }
-              >
-                <SelectTrigger className="bg-white/[0.03] border-white/[0.06] focus:border-emerald-500/40 rounded-xl">
-                  <SelectValue placeholder="Select developer" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#12181F] border-white/10 text-white">
-                  {developers.map((dev) => (
-                    <SelectItem key={dev._id} value={dev.name}>
-                      {dev.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isAdmin ? (
+                <Select
+                  value={formData.developerName}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, developerName: val ?? "" })
+                  }
+                >
+                  <SelectTrigger className="bg-white/[0.03] border-white/[0.06] focus:border-emerald-500/40 rounded-xl">
+                    <SelectValue placeholder="Select developer" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#12181F] border-white/10 text-white">
+                    {developers.map((dev) => (
+                      <SelectItem key={dev._id} value={dev.name}>
+                        {dev.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={formData.developerName}
+                  disabled
+                  className="bg-white/[0.03] border-white/[0.06] text-white/50 rounded-xl cursor-not-allowed"
+                />
+              )}
             </div>
           </div>
 

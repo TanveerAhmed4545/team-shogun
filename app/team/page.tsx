@@ -27,19 +27,23 @@ import {
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
-import { useUsers, useUpdateUser, useDeleteUser, TeamMember } from "@/hooks/useUsers";
+import { useUsers, useUpdateUser, useDeleteUser } from "@/hooks/useUsers";
+import { useTeamPerformance } from "@/hooks/useTeamPerformance";
 
 export default function TeamPage() {
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [showPending, setShowPending] = useState(false);
   
   const isAdmin = session?.user?.role === "admin";
 
   // Modularized Hooks [hook-abstraction]
-  const { data: members = [], isLoading: loading } = useUsers();
+  const { data: members = [], isLoading: loadingUsers } = useUsers();
+  const { data: performance = [], isLoading: loadingPerformance } = useTeamPerformance();
   const updateMutation = useUpdateUser();
   const deleteMutation = useDeleteUser();
+
+  const loading = loadingUsers || loadingPerformance;
 
   const handleStatusUpdate = (userId: string, newStatus: string) => {
     updateMutation.mutate({ userId, data: { status: newStatus } });
@@ -55,8 +59,19 @@ export default function TeamPage() {
     }
   };
 
-  const activeMembers = members.filter((m) => m.status === "active");
-  const pendingMembers = members.filter((m) => m.status === "pending");
+  const activeMembers = (Array.isArray(members) ? members : [])
+    .filter((m) => m.status === "active")
+    .map((member) => {
+      const perf = Array.isArray(performance) ? performance.find((p: any) => p._id === member._id) : null;
+      return {
+        ...member,
+        performance_score: perf ? Math.round(perf.totalActive / 10) : 0,
+        total_earnings: perf ? perf.delivered : 0,
+        projects_completed: perf ? perf.completedCount : 0
+      };
+    });
+    
+  const pendingMembers = (Array.isArray(members) ? members : []).filter((m) => m.status === "pending");
 
   const roleColors: Record<string, string> = {
     admin: "bg-amber-500/10 text-amber-500 border-amber-500/20",

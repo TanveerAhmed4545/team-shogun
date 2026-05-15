@@ -20,8 +20,11 @@ import {
 } from "@/components/ui/select";
 import { Plus, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
 
 export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [developers, setDevelopers] = useState<any[]>([]);
@@ -43,6 +46,12 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
   });
 
   useEffect(() => {
+    if (open && !isAdmin && session?.user?.name) {
+      setFormData(prev => ({ ...prev, developerName: session.user.name }));
+    }
+  }, [open, isAdmin, session]);
+
+  useEffect(() => {
     async function fetchDevs() {
       try {
         const res = await fetch("/api/users");
@@ -56,8 +65,8 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
         console.error(e);
       }
     }
-    if (open) fetchDevs();
-  }, [open]);
+    if (open && isAdmin) fetchDevs();
+  }, [open, isAdmin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -196,23 +205,31 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
               <Label className="text-[9px] uppercase tracking-[0.2em] font-black text-white/20">
                 Developer Name *
               </Label>
-              <Select
-                value={formData.developerName}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, developerName: val ?? "" })
-                }
-              >
-                <SelectTrigger className="bg-white/[0.03] border-white/[0.06] focus:border-emerald-500/40 rounded-xl">
-                  <SelectValue placeholder="Select developer" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#12181F] border-white/10 text-white">
-                  {developers.map((dev) => (
-                    <SelectItem key={dev._id} value={dev.name}>
-                      {dev.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isAdmin ? (
+                <Select
+                  value={formData.developerName}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, developerName: val ?? "" })
+                  }
+                >
+                  <SelectTrigger className="bg-white/[0.03] border-white/[0.06] focus:border-emerald-500/40 rounded-xl">
+                    <SelectValue placeholder="Select developer" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#12181F] border-white/10 text-white">
+                    {developers.map((dev) => (
+                      <SelectItem key={dev._id} value={dev.name}>
+                        {dev.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={formData.developerName}
+                  disabled
+                  className="bg-white/[0.03] border-white/[0.06] text-white/50 rounded-xl cursor-not-allowed"
+                />
+              )}
             </div>
           </div>
 

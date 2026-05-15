@@ -71,7 +71,7 @@ export function LeaderboardWidget() {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {leaders.length === 0 ? (
+        {!Array.isArray(leaders) || leaders.length === 0 ? (
           <p className="text-white/20 text-sm font-medium text-center py-6">No data yet</p>
         ) : (
           leaders.map((member, index) => (

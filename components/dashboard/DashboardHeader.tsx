@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useSidebar } from "./DashboardSidebar";
+import Image from "next/image";
 
 export function DashboardHeader() {
   const { data: session } = useSession();
@@ -165,8 +166,12 @@ export function DashboardHeader() {
           {/* Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger render={<button className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group p-1 md:pr-3 rounded-xl hover:bg-white/[0.04] transition-all outline-none" />}>
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0">
-                  {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "S"}
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0 overflow-hidden relative">
+                  {session?.user?.avatar ? (
+                    <Image src={session.user.avatar} alt={session.user.name || "User"} fill className="object-cover" />
+                  ) : (
+                    session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "S"
+                  )}
                 </div>
                 <div className="text-left hidden md:block">
                   <p className="text-sm font-black leading-tight tracking-tight text-white/80">
@@ -179,8 +184,12 @@ export function DashboardHeader() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[220px] sm:w-[240px] bg-[#12181F] border border-white/10 p-2 text-white shadow-2xl">
               <div className="flex items-center gap-3 p-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-black text-lg shadow-lg shrink-0">
-                  {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "S"}
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-black text-lg shadow-lg shrink-0 overflow-hidden relative">
+                  {session?.user?.avatar ? (
+                    <Image src={session.user.avatar} alt={session.user.name || "User"} fill className="object-cover" />
+                  ) : (
+                    session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "S"
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="font-bold text-sm leading-none truncate">{session?.user?.name}</p>
@@ -194,15 +203,15 @@ export function DashboardHeader() {
               </div>
               <DropdownMenuSeparator className="bg-white/10 my-1" />
               <DropdownMenuGroup>
-                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer hover:bg-white/5 focus:bg-white/5 rounded-lg text-sm text-white/70 hover:text-white transition-colors" render={<Link href="/profile" />}>
+                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-lg text-sm text-white/70 focus:bg-white/10 focus:text-white transition-colors" render={<Link href="/profile" />}>
                     <User className="w-4 h-4 mr-3 text-white/40" />
                     Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer hover:bg-white/5 focus:bg-white/5 rounded-lg text-sm text-white/70 hover:text-white transition-colors" render={<Link href="/notifications" />}>
+                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-lg text-sm text-white/70 focus:bg-white/10 focus:text-white transition-colors" render={<Link href="/notifications" />}>
                     <Mail className="w-4 h-4 mr-3 text-white/40" />
                     Inbox
                 </DropdownMenuItem>
-                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer hover:bg-white/5 focus:bg-white/5 rounded-lg text-sm text-white/70 hover:text-white transition-colors" render={<Link href="/settings" />}>
+                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-lg text-sm text-white/70 focus:bg-white/10 focus:text-white transition-colors" render={<Link href="/settings" />}>
                     <Key className="w-4 h-4 mr-3 text-white/40" />
                     Change Password
                 </DropdownMenuItem>

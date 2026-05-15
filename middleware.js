@@ -6,29 +6,34 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
-    if (!token) {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
-
-    if (token.status !== "active") {
-      // You can redirect to a "pending-approval" page or show an error
+    if (token && token.status !== "active") {
       if (path !== "/pending") {
         return NextResponse.redirect(new URL("/pending", req.url));
       }
     }
 
     // Protect Admin routes
-    if (path.startsWith("/admin") && token.role !== "admin") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+    if (path.startsWith("/admin") && token?.role !== "admin") {
+      return NextResponse.redirect(new URL("/", req.url));
     }
   },
   {
     callbacks: {
       authorized: ({ token }) => !!token,
     },
+    secret: process.env.NEXTAUTH_SECRET,
   }
 );
 
 export const config = {
-  matcher: ["/((?!login|register|api/auth|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/",
+    "/projects/:path*",
+    "/leaderboard/:path*",
+    "/team/:path*",
+    "/profile/:path*",
+    "/settings/:path*",
+    "/notifications/:path*",
+    "/admin/:path*",
+  ],
 };

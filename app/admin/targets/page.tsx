@@ -26,12 +26,13 @@ import Image from "next/image";
 interface TeamMember {
   _id: string;
   name: string;
-  email: string;
+  email?: string;
   role: string;
   avatar: string;
-  total_earnings: number;
-  projects_completed: number;
-  preferences: {
+  delivered: number;
+  completedCount: number;
+  target: number;
+  preferences?: {
     monthlyTarget: number;
   };
 }
@@ -58,14 +59,14 @@ export default function RevenueTargetsPage() {
   useEffect(() => {
     async function fetchMembers() {
       try {
-        const res = await fetch("/api/users");
+        const res = await fetch("/api/analytics/team-performance");
         const json = await res.json();
-        if (json.success && json.data?.users) {
-          setMembers(json.data.users);
+        if (json.success && json.data?.performance) {
+          setMembers(json.data.performance);
           // Initialize edited targets with current values
           const targets: Record<string, number> = {};
-          json.data.users.forEach((m: TeamMember) => {
-            targets[m._id] = m.preferences?.monthlyTarget || 10000;
+          json.data.performance.forEach((m: TeamMember) => {
+            targets[m._id] = m.target || 1100;
           });
           setEditedTargets(targets);
         }
@@ -143,7 +144,7 @@ export default function RevenueTargetsPage() {
   };
 
   const totalTarget = Object.values(editedTargets).reduce((sum, v) => sum + v, 0);
-  const totalEarnings = members.reduce((sum, m) => sum + (m.total_earnings || 0), 0);
+  const totalEarnings = members.reduce((sum, m) => sum + (m.delivered || 0), 0);
 
   const roleColors: Record<string, string> = {
     admin: "bg-amber-500/10 text-amber-500 border-amber-500/20",
@@ -300,12 +301,12 @@ export default function RevenueTargetsPage() {
                     </div>
                   ) : (
                     members.map((member, i) => {
-                      const currentTarget = editedTargets[member._id] || 0;
-                      const originalTarget = member.preferences?.monthlyTarget || 10000;
-                      const hasChanged = currentTarget !== originalTarget;
-                      const progress = originalTarget > 0
-                        ? Math.min(100, (member.total_earnings / originalTarget) * 100)
-                        : 0;
+                        const currentTarget = editedTargets[member._id] || 0;
+                        const originalTarget = member.target || 1100;
+                        const hasChanged = currentTarget !== originalTarget;
+                        const progress = originalTarget > 0
+                          ? Math.min(100, (member.delivered / originalTarget) * 100)
+                          : 0;
 
                       return (
                         <motion.div
@@ -337,7 +338,7 @@ export default function RevenueTargetsPage() {
                               <div className="flex items-center gap-3 mt-1">
                                 <span className="text-[10px] text-white/25 font-medium truncate">{member.email}</span>
                                 <span className="text-[10px] text-emerald-500/60 font-bold hidden sm:inline">
-                                  {member.projects_completed} projects
+                                  {member.completedCount} projects
                                 </span>
                               </div>
                             </div>
