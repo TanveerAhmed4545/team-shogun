@@ -14,7 +14,7 @@ export async function GET() {
     await dbConnect();
 
     // Fetch all active developers
-    const users = await User.find({ status: "active" }).select("name avatar preferences role stars");
+    const users = await User.find({ status: "active" }).select("name avatar preferences role stars skills");
 
     // Fetch all projects to calculate performance
     const projects = await Project.find({});
@@ -57,7 +57,8 @@ export async function GET() {
         need,
         stars,
         projectCount: userProjects.length,
-        completedCount
+        completedCount,
+        skills: user.skills
       };
     });
 

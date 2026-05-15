@@ -2,10 +2,20 @@ import { projectService } from "@/lib/services/project.service";
 import { ApiResponse } from "@/lib/utils/api-response";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import User from "@/models/User";
 
 export async function GET(req) {
   try {
-    const projects = await projectService.getAllProjects();
+    const { searchParams } = new URL(req.url);
+    const developerId = searchParams.get("developer");
+    let filter = {};
+    
+    if (developerId) {
+      const user = await User.findById(developerId);
+      filter = user ? { $or: [{ "developer.id": developerId }, { "developer.name": user.name }] } : { "developer.id": developerId };
+    }
+    
+    const projects = await projectService.getAllProjects(filter);
     return ApiResponse.success(projects);
   } catch (error) {
     console.error("Projects GET Error:", error);

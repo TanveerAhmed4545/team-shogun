@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardSidebar, SidebarProvider } from "@/components/dashboard/DashboardSidebar";
@@ -236,12 +237,14 @@ export default function TeamPage() {
                       <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-0 group-hover:opacity-30 transition-opacity" />
                       <CardContent className="p-6 flex-1 flex flex-col">
                         <div className="flex justify-between items-start mb-5">
-                          <Avatar className="w-16 h-16 rounded-2xl border-2 border-white/[0.06] group-hover:border-emerald-500/30 transition-colors">
-                            <AvatarImage src={member.avatar} />
-                            <AvatarFallback className="bg-gradient-to-br from-emerald-500/20 to-blue-500/20 text-xl font-black">
-                              {member.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <Link href={`/team/${member._id}`}>
+                            <Avatar className="w-16 h-16 rounded-2xl border-2 border-white/[0.06] hover:border-emerald-500/30 transition-colors cursor-pointer">
+                              <AvatarImage src={member.avatar} />
+                              <AvatarFallback className="bg-gradient-to-br from-emerald-500/20 to-blue-500/20 text-xl font-black">
+                                {member.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </Link>
                           {isAdmin && session?.user?.id !== member._id && (
                             <DropdownMenu>
                               <DropdownMenuTrigger
@@ -294,9 +297,11 @@ export default function TeamPage() {
 
                         <div className="space-y-4 flex-1 flex flex-col">
                           <div>
-                            <h3 className="text-lg font-black text-white/90 group-hover:text-emerald-500 transition-colors">
-                              {member.name}
-                            </h3>
+                            <Link href={`/team/${member._id}`}>
+                              <h3 className="text-lg font-black text-white/90 hover:text-emerald-500 transition-colors cursor-pointer">
+                                {member.name}
+                              </h3>
+                            </Link>
                             <div className="flex items-center space-x-2 mt-1">
                               <Badge
                                 variant="outline"
