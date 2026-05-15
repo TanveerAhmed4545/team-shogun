@@ -10,12 +10,13 @@
 
 ---
 
-## 🚀 Recent Core Upgrades (Production v2.5)
+## 🚀 Recent Core Upgrades (Production v2.6)
+- **🔍 Global Instant Search**: Debounced search for projects, members, and navigation directly from the dashboard header.
+- **👤 High-Fidelity Member Profiles**: Glassmorphic profile pages featuring interactive earnings charts, skill badges, and active project tables.
 - **⚡ Real-Time Engine (Pusher)**: Full-stack live synchronization. KPIs, charts, and leaderboards update instantly across all sessions.
 - **🛡️ Privacy-First Activity**: Role-based visibility for activity feeds. Members see their own actions; Admins manage the entire agency log.
 - **📈 Dynamic Performance Logic**: Advanced MongoDB aggregation for real-time leaderboard rankings based on live revenue and stars.
-- **🎨 Glassmorphic Modernization**: Synchronized 1600px container layouts across all operational pages with animated mesh-glow backgrounds.
-- **📊 Professional Financial Exports**: Modern, styled export engine for operational reports and data snapshots.
+- **🔄 Optimized Data Sync**: Disabled aggressive caching for real-time performance tracking and fixed project filtering logic.
 
 ## 🌟 Key Features
 
