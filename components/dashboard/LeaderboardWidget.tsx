@@ -36,7 +36,7 @@ export function LeaderboardWidget() {
           projects_completed: m.completedCount
         }));
     },
-    staleTime: 60000,
+    staleTime: 0,
   });
 
   // Real-time synchronization [rt-sync-effect]

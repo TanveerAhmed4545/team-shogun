@@ -98,7 +98,7 @@ export default function TeamPage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-[-0.04em]">
-                  Elite Force
+                  Team Shogun
                 </h1>
                 <p className="text-white/30 mt-1 font-medium">
                   {activeMembers.length} active · {pendingMembers.length}{" "}

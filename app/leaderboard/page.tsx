@@ -106,12 +106,20 @@ export default function LeaderboardPage() {
     Total: d.totalActive
   })) || [];
 
+  const handleDownload = () => {
+    window.print();
+  };
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen mesh-bg text-white">
-        <DashboardSidebar />
+        <div className="print:hidden">
+          <DashboardSidebar />
+        </div>
         <main className="flex-1 flex flex-col relative overflow-x-hidden min-w-0">
-          <DashboardHeader />
+          <div className="print:hidden">
+            <DashboardHeader />
+          </div>
           <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-8">
             
             {/* Header Area */}
@@ -120,7 +128,7 @@ export default function LeaderboardPage() {
                 <Badge className="mb-4 bg-amber-500/[0.08] text-amber-400 border-amber-500/20 font-black tracking-[0.2em] uppercase text-[9px]">
                   Team Roster
                 </Badge>
-                <h1 className="text-4xl sm:text-5xl font-black tracking-[-0.04em]">Elite Force</h1>
+                <h1 className="text-4xl sm:text-5xl font-black tracking-[-0.04em]">Team Shogun</h1>
                 <p className="text-white/30 mt-2 text-sm font-medium">
                   {data?.performance?.length || 0} active members • {data?.totalStars || 0} total stars earned
                 </p>
@@ -282,7 +290,10 @@ export default function LeaderboardPage() {
                     </div>
                   ))}
                 </div>
-                <Button className="w-full bg-white/[0.03] border border-white/5 hover:bg-white/10 text-white font-bold rounded-xl py-6">
+                <Button 
+                  onClick={handleDownload}
+                  className="w-full bg-white/[0.03] border border-white/5 hover:bg-white/10 text-white font-bold rounded-xl py-6 print:hidden"
+                >
                   Download Full Report (PDF)
                 </Button>
               </Card>
