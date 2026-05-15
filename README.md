@@ -10,34 +10,34 @@
 
 ---
 
-## 🚀 Recent Core Upgrades (Production v2.0)
-- **⚡ Real-Time Status Sync**: Integrated Pusher for live, cross-device dashboard updates.
-- **📜 Activity Audit Logs**: Full accountability with a persistent history of every administrative action.
-- **🎨 Modern UI/UX**: Professional skeleton loading states and optimized Next.js image handling for 90+ Lighthouse scores.
-- **🔍 Command Center Search**: Global `Ctrl + K` navigation for high-speed operation.
-
+## 🚀 Recent Core Upgrades (Production v2.5)
+- **⚡ Real-Time Engine (Pusher)**: Full-stack live synchronization. KPIs, charts, and leaderboards update instantly across all sessions.
+- **🛡️ Privacy-First Activity**: Role-based visibility for activity feeds. Members see their own actions; Admins manage the entire agency log.
+- **📈 Dynamic Performance Logic**: Advanced MongoDB aggregation for real-time leaderboard rankings based on live revenue and stars.
+- **🎨 Glassmorphic Modernization**: Synchronized 1600px container layouts across all operational pages with animated mesh-glow backgrounds.
+- **📊 Professional Financial Exports**: Modern, styled export engine for operational reports and data snapshots.
 
 ## 🌟 Key Features
 
-### 📊 Real-Time KPI Dashboard
-- **Financial Analytics**: Track total earnings, active order values, and completed projects at a glance.
-- **Dynamic Charting**: Visual insights into agency performance over time.
-- **Activity Feed**: Live timeline of status changes, new orders, and completed work.
+### 📊 Operations Dashboard (Command Center)
+- **Real-Time KPIs**: Live tracking of Total Revenue, Active Orders, and Success Rates with trend indicators.
+- **Revenue Growth Chart**: Dynamic visualization of monthly financial trends aggregated from live transactions.
+- **Top Performers Widget**: Live leaderboard tracking individual developer points and project volume in real-time.
 
-### 📝 Agile Project Management (Kanban & Table Views)
-- **Order Tracking**: Seamlessly shift between high-density Table View and visual Kanban Boards.
-- **Status Lifecycle**: Manage orders through strictly defined phases: `Pending`, `WIP`, `Revision`, `Delivered`, `Completed`, `Cancelled`.
-- **Dynamic Time Tracking**: Auto-calculating deadlines with color-coded urgencies (Green, Yellow, Red) based on time remaining.
+### 📝 Agile Project Management
+- **Status Lifecycle**: Standardized workflow through `Pending`, `WIP`, `Revision`, `Delivered`, `Completed`, and `Cancelled`.
+- **Dynamic Time Tracking**: Auto-calculating deadlines with color-coded priority alerts (Green/Yellow/Red).
+- **Activity Audit Trail**: Secure, role-filtered history of every project update and status transition.
 
-### 🔒 Enterprise-Grade Role-Based Access Control (RBAC)
-Strict security protocols to protect business operations:
-- **Administrators**: Full system control. Can delete projects, assign team roles, approve pending accounts, and view global notifications.
-- **Project Owners/Developers**: Can edit and update the statuses of the specific projects they are assigned to or have created.
-- **Standard Members**: Can view projects and the team roster but are restricted from mutating external data or managing user accounts. Privacy-first notifications ensure members only see their own alerts.
+### 🔒 Enterprise RBAC & Security
+- **Admin Command**: Global visibility, user management, project deletion, and financial overrides.
+- **Developer Focus**: Secure access to assigned projects with instant status update capabilities.
+- **Data Privacy**: Strict row-level security for notifications and activities. Members can only access their personal operational data.
 
-### 👥 Team Roster & Onboarding
-- **Account Approvals**: New registrations enter a `Pending` state awaiting Admin approval before they can access the platform.
-- **Performance Tracking**: Built-in developer metrics including individual scoreings, project counts, and revenue attribution.
+### 👥 Team Performance System
+- **Dynamic Leaderboard**: Real-time ranking of team members based on delivered revenue and customer stars.
+- **Revenue Targets**: Administrative control panel for setting and monitoring individual monthly revenue goals.
+- **Profile Synchronization**: stylized high-fidelity avatars and initials system for consistent professional appearance.
 
 ---
 
