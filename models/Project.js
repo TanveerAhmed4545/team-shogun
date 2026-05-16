@@ -42,6 +42,8 @@ const ProjectSchema = new mongoose.Schema(
         changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       },
     ],
+    notified72h: { type: Boolean, default: false },
+    notified24h: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
