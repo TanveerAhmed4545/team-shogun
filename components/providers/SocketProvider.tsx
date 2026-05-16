@@ -24,11 +24,19 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
 
   useEffect(() => {
-    // Connect to the standalone socket server.
-    // Use an environment variable in production, fallback to localhost:4000
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000";
+    const isDev = process.env.NODE_ENV === "development";
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
     
-    const socketInstance = new (ClientIO as any)(socketUrl, {
+    // In production, only connect if a custom socket URL is explicitly provided.
+    // This prevents "localhost:4000" connection errors on Vercel.
+    if (!isDev && !socketUrl) {
+      console.log("Realtime: No socket URL provided for production. Real-time features will use polling fallback.");
+      return;
+    }
+
+    const finalUrl = socketUrl || "http://localhost:4000";
+    
+    const socketInstance = new (ClientIO as any)(finalUrl, {
       transports: ["websocket", "polling"],
       reconnectionAttempts: 5,
     });
