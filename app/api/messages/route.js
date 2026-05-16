@@ -62,10 +62,10 @@ export async function POST(req) {
       attachments: attachments || [],
     });
 
-    // Emitting real-time event through our internal Pusher adapter (which calls the local socket server)
+    // Emitting real-time event through our standalone socket server
     try {
-      const { pusherServer } = await import("@/lib/pusher");
-      await pusherServer.trigger(`chat-${projectId}`, "new-message", message);
+      const { emitSocketEvent } = await import("@/lib/socket-emitter");
+      await emitSocketEvent(`chat-${projectId}`, "new-message", message);
     } catch (e) {
       console.error("Failed to emit socket event:", e);
     }

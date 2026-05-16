@@ -85,7 +85,7 @@ export async function PUT(req, { params }) {
     // Log Activity & Trigger Pusher [rt-event-trigger]
     try {
       const { activityService } = await import("@/lib/services/activity.service");
-      const { pusherServer } = await import("@/lib/pusher");
+      const { emitSocketEvent } = await import("@/lib/socket-emitter");
       
       let action = "updated profile";
       if (data.role) action = `changed role to ${data.role}`;
@@ -98,7 +98,7 @@ export async function PUT(req, { params }) {
         type: "team"
       });
 
-      await pusherServer.trigger("team-channel", "team-updated", {
+      await emitSocketEvent("team-channel", "team-updated", {
         userId: session.user.id,
         targetId: id
       });
@@ -130,7 +130,7 @@ export async function DELETE(req, { params }) {
     // Log Activity & Trigger Pusher [rt-event-trigger]
     try {
       const { activityService } = await import("@/lib/services/activity.service");
-      const { pusherServer } = await import("@/lib/pusher");
+      const { emitSocketEvent } = await import("@/lib/socket-emitter");
 
       await activityService.logActivity({
         userId: session.user.id,
@@ -139,7 +139,7 @@ export async function DELETE(req, { params }) {
         type: "team"
       });
 
-      await pusherServer.trigger("team-channel", "team-updated", {
+      await emitSocketEvent("team-channel", "team-updated", {
         userId: session.user.id,
         action: "deleted"
       });

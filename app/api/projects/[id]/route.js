@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Project from "@/models/Project";
 import Activity from "@/models/Activity";
-import { pusherServer } from "@/lib/pusher";
+import { emitSocketEvent } from "@/lib/socket-emitter";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
 import { z } from "zod";
 
@@ -91,14 +91,14 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: "Project not found" }, { status: 404 });
     }
 
-    // Trigger Pusher Event [rt-event-trigger]
+    // Trigger Socket Event [rt-event-trigger]
     try {
-      await pusherServer.trigger("projects-channel", "project-updated", {
+      await emitSocketEvent("projects-channel", "project-updated", {
         projectId: id,
         userId: session.user.id,
       });
     } catch (e) {
-      console.warn("Pusher trigger failed:", e.message);
+      console.warn("Socket trigger failed:", e.message);
     }
 
     if (data.orderStatus) {
@@ -139,18 +139,18 @@ export async function PUT(req, { params }) {
         
         const createdNotifications = await Notification.insertMany(notificationsToCreate);
         
-        // Trigger Pusher for developer
+        // Trigger Socket for developer
         if (project.developer?.id && project.developer.id.toString() !== session.user.id) {
           const devNotif = createdNotifications.find(n => n.userId.toString() === project.developer.id.toString());
           if (devNotif) {
-            await pusherServer.trigger(`user-${project.developer.id}`, "notification-received", devNotif);
+            await emitSocketEvent(`user-${project.developer.id}`, "notification-received", devNotif);
           }
         }
         
-        // Trigger Pusher for admins (one event for all admins)
+        // Trigger Socket for admins (one event for all admins)
         const adminNotif = createdNotifications.find(n => admins.some(a => a._id.toString() === n.userId.toString()));
         if (adminNotif) {
-          await pusherServer.trigger("admin-channel", "notification-received", adminNotif);
+          await emitSocketEvent("admin-channel", "notification-received", adminNotif);
         }
         
       } catch (notifErr) {
@@ -203,7 +203,7 @@ export async function DELETE(req, { params }) {
 
     // Trigger Socket Event [rt-event-trigger]
     try {
-      await pusherServer.trigger("projects-channel", "project-updated", {
+      await emitSocketEvent("projects-channel", "project-updated", {
         projectId: id,
         userId: session.user.id,
         action: "deleted"
