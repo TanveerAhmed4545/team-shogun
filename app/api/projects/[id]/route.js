@@ -4,7 +4,22 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Project from "@/models/Project";
 import Activity from "@/models/Activity";
-const { pusherServer } = require("@/lib/pusher");
+import { pusherServer } from "@/lib/pusher";
+import { checkRateLimit } from "@/lib/utils/rate-limit";
+import { z } from "zod";
+
+const updateSchema = z.object({
+  clientName: z.string().min(2).max(100).optional(),
+  profileName: z.string().min(2).max(100).optional(),
+  orderId: z.string().min(3).max(50).optional(),
+  value: z.number().min(0).optional(),
+  orderStatus: z.enum(["Pending", "WIP", "Revision", "Delivered", "Completed", "Cancelled"]).optional(),
+  deadline: z.string().refine(val => !isNaN(Date.parse(val))).optional(),
+  developer: z.object({
+    id: z.string().optional(),
+    name: z.string().optional()
+  }).optional(),
+}).passthrough();
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +69,21 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: "Forbidden: You do not have permission to edit this project." }, { status: 403 });
     }
 
-    const data = await req.json();
+    // Rate limiting (max 20 updates per minute per user)
+    const isAllowed = checkRateLimit(`project_update_${session.user.id}`, 20, 60000);
+    if (!isAllowed) {
+      return NextResponse.json({ message: "Too many requests, please try again later." }, { status: 429 });
+    }
+
+    const body = await req.json();
+
+    // Validate input payload
+    const parsed = updateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ message: parsed.error.errors[0].message }, { status: 400 });
+    }
+
+    const data = parsed.data;
 
     const project = await Project.findByIdAndUpdate(id, data, { new: true, runValidators: true });
 
@@ -136,6 +165,7 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
+  console.log(">>> DELETE API CALLED <<<");
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.status !== "active") {
@@ -143,23 +173,35 @@ export async function DELETE(req, { params }) {
     }
 
     await dbConnect();
-    const User = (await import("@/models/User")).default;
-    const currentUser = await User.findById(session.user.id);
+    
+    // Fetch project to check ownership
+    const { id } = await params;
+    const projectToDelete = await Project.findById(id);
 
-    if (currentUser?.role !== "admin") {
-      return NextResponse.json({ message: "Forbidden: Admin access only" }, { status: 403 });
+    if (!projectToDelete) {
+      console.warn(`Project not found for deletion: ${id}`);
+      return NextResponse.json({ message: "Project not found" }, { status: 404 });
     }
 
-    await dbConnect();
-    const { id } = await params;
+    // Check permissions [rbac-enforcement]
+    const isAdmin = session.user.role === "admin";
+    const isCreator = projectToDelete.createdBy?.toString() === session.user.id;
+
+    if (!isAdmin && !isCreator) {
+      console.warn(`Unauthorized delete attempt by user ${session.user.id} on project ${id}`);
+      return NextResponse.json({ message: "Forbidden: You do not have permission to delete this project" }, { status: 403 });
+    }
 
     const project = await Project.findByIdAndDelete(id);
 
     if (!project) {
+      console.warn(`Project not found for deletion: ${id}`);
       return NextResponse.json({ message: "Project not found" }, { status: 404 });
     }
 
-    // Trigger Pusher Event [rt-event-trigger]
+    console.log(`Project deleted: ${project.orderId} (${id})`);
+
+    // Trigger Socket Event [rt-event-trigger]
     try {
       await pusherServer.trigger("projects-channel", "project-updated", {
         projectId: id,
@@ -167,7 +209,7 @@ export async function DELETE(req, { params }) {
         action: "deleted"
       });
     } catch (e) {
-      console.warn("Pusher trigger failed:", e.message);
+      console.warn("Socket trigger failed:", e.message);
     }
 
     // Log Activity [audit-log]
@@ -185,6 +227,7 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json({ message: "Project deleted successfully" }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    console.error("DELETE PROJECT ERROR:", error);
+    return NextResponse.json({ message: "Internal Server Error", error: error.message }, { status: 500 });
   }
 }

@@ -17,9 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Star } from "lucide-react";
+import { Loader2, Star, MessageSquare, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
+import { ProjectChat } from "./ProjectChat";
+import Swal from "sweetalert2";
 
 interface EditProjectModalProps {
   project: any;
@@ -37,6 +39,7 @@ export function EditProjectModal({
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "admin";
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"details" | "chat">("details");
   const [developers, setDevelopers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     orderId: "",
@@ -154,16 +157,51 @@ export function EditProjectModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-[#0B0F14] border-white/10 text-white backdrop-blur-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-black tracking-tight">
-            Edit Order
-          </DialogTitle>
-          <p className="text-sm text-white/30 font-medium mt-1">
-            Update all project fields
-          </p>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-5 mt-4">
+      <DialogContent className="sm:max-w-[600px] md:max-w-[900px] lg:max-w-[1000px] bg-[#0B0F14] border-white/10 text-white backdrop-blur-2xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        
+        {/* Header Section */}
+        <div className="p-6 border-b border-white/[0.06] flex items-center justify-between shrink-0 bg-white/[0.01]">
+          <div>
+            <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-2">
+              {project?.clientName || "Edit Order"}
+              {project?.orderStatus && (
+                <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  {project.orderStatus}
+                </span>
+              )}
+            </DialogTitle>
+            <p className="text-xs text-white/30 font-bold mt-1 tracking-widest uppercase">
+              {project?.orderId || "Updating Project"}
+            </p>
+          </div>
+          
+          {/* Custom Tabs */}
+          <div className="flex bg-white/[0.03] p-1 rounded-xl border border-white/[0.06]">
+            <button
+              onClick={() => setActiveTab("details")}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === "details" ? "bg-emerald-500/10 text-emerald-500 shadow-sm" : "text-white/40 hover:text-white/80"
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              Details
+            </button>
+            <button
+              onClick={() => setActiveTab("chat")}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === "chat" ? "bg-emerald-500/10 text-emerald-500 shadow-sm" : "text-white/40 hover:text-white/80"
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              Chat
+            </button>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-6 bg-[#0B0F14]">
+          {activeTab === "details" ? (
+            <form onSubmit={handleSubmit} className="space-y-6">
           {/* Row 1: Order # + Value */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -452,18 +490,71 @@ export function EditProjectModal({
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black h-12 rounded-xl shadow-xl shadow-emerald-500/10 transition-all"
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              "Update Project"
-            )}
-          </Button>
-        </form>
+            <div className="flex gap-3">
+              {(isAdmin || (project?.createdBy && session?.user?.id === project.createdBy.toString())) && (
+                <button
+                  type="button"
+                  className="w-1/3 border border-rose-500/20 text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/40 font-bold h-12 rounded-xl transition-all cursor-pointer flex items-center justify-center"
+                  disabled={loading}
+                  onClick={async () => {
+                    if (!project?._id) return;
+                    
+                    const result = await Swal.fire({
+                      title: 'Delete Project?',
+                      text: `Are you sure you want to delete ${project.orderId}?`,
+                      icon: 'warning',
+                      showCancelButton: true,
+                      confirmButtonColor: '#10b981',
+                      cancelButtonColor: '#f43f5e',
+                      confirmButtonText: 'Yes, delete it!',
+                      background: '#0B0F14',
+                      color: '#fff',
+                      customClass: {
+                        popup: 'border border-white/10 rounded-2xl backdrop-blur-xl',
+                      }
+                    });
+
+                    if (result.isConfirmed) {
+                      setLoading(true);
+                      try {
+                        const res = await fetch(`/api/projects/${project._id}`, { method: "DELETE" });
+                        if (res.ok) {
+                          toast.success("Project deleted");
+                          onOpenChange(false);
+                          onSuccess();
+                        } else {
+                          toast.error("Failed to delete project");
+                        }
+                      } catch {
+                        toast.error("Network error");
+                      } finally {
+                        setLoading(false);
+                      }
+                    }
+                  }}
+                >
+                  Delete Project
+                </button>
+              )}
+              <Button
+                type="submit"
+                className={`${isAdmin ? 'w-2/3' : 'w-full'} bg-emerald-500 hover:bg-emerald-600 text-white font-black h-12 rounded-xl shadow-xl shadow-emerald-500/10 transition-all`}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Update Project"
+                )}
+              </Button>
+            </div>
+          </form>
+          ) : (
+            <div className="h-full min-h-[400px]">
+              <ProjectChat projectId={project?._id} />
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

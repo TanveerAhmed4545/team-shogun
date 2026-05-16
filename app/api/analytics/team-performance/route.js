@@ -13,63 +13,120 @@ export async function GET() {
 
     await dbConnect();
 
-    // Fetch all active developers
-    const users = await User.find({ status: "active" }).select("name avatar preferences role stars skills");
+    const users = await User.aggregate([
+      { $match: { status: "active" } },
+      {
+        $lookup: {
+          from: "projects",
+          let: { userId: "$_id", userName: "$name" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ["$developer.id", "$$userId"] },
+                    { $eq: ["$developer.name", "$$userName"] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "projects"
+        }
+      },
+      {
+        $addFields: {
+          wipProjects: {
+            $filter: {
+              input: "$projects",
+              as: "p",
+              cond: { $in: ["$$p.orderStatus", ["WIP", "Revision"]] }
+            }
+          },
+          completedProjects: {
+            $filter: {
+              input: "$projects",
+              as: "p",
+              cond: { $in: ["$$p.orderStatus", ["Delivered", "Completed"]] }
+            }
+          },
+          cancelledProjects: {
+            $filter: {
+              input: "$projects",
+              as: "p",
+              cond: { $eq: ["$$p.orderStatus", "Cancelled"] }
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          avatar: 1,
+          email: 1,
+          role: 1,
+          skills: 1,
+          target: { $ifNull: ["$preferences.monthlyTarget", 1100] },
+          wip: { $sum: "$wipProjects.value" },
+          delivered: { $sum: "$completedProjects.value" },
+          cancelled: { $sum: "$cancelledProjects.value" },
+          stars: {
+            $size: {
+              $filter: {
+                input: "$completedProjects",
+                as: "p",
+                cond: { $eq: ["$$p.star", 5] }
+              }
+            }
+          },
+          projectCount: { $size: "$projects" },
+          completedCount: { $size: "$completedProjects" },
+          // Developer Efficiency & Delivery Speed
+          avgDeliveryTimeDays: {
+            $avg: {
+              $map: {
+                input: "$completedProjects",
+                as: "p",
+                in: {
+                  $divide: [
+                    { $subtract: [{ $ifNull: ["$$p.deliveryDate", "$$p.updatedAt"] }, "$$p.createdAt"] },
+                    1000 * 60 * 60 * 24 // ms to days
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          totalActive: { $add: ["$wip", "$delivered"] },
+        }
+      },
+      {
+        $addFields: {
+          need: { $subtract: ["$target", "$totalActive"] },
+          // Efficiency Score (Value delivered per day taken)
+          efficiencyScore: {
+            $cond: [
+              { $gt: ["$avgDeliveryTimeDays", 0] },
+              { $divide: ["$delivered", "$avgDeliveryTimeDays"] },
+              0
+            ]
+          }
+        }
+      },
+      { $sort: { totalActive: -1 } }
+    ]);
 
-    // Fetch all projects to calculate performance
-    const projects = await Project.find({});
-
-    const performanceData = users.map(user => {
-      const userProjects = projects.filter(p => 
-        p.developer?.id?.toString() === user._id.toString() || 
-        (p.developer?.name && p.developer.name === user.name)
-      );
-      
-      const wip = userProjects
-        .filter(p => p.orderStatus === "WIP" || p.orderStatus === "Revision")
-        .reduce((sum, p) => sum + (p.value || 0), 0);
-        
-      const delivered = userProjects
-        .filter(p => p.orderStatus === "Delivered" || p.orderStatus === "Completed")
-        .reduce((sum, p) => sum + (p.value || 0), 0);
-        
-      const cancelled = userProjects
-        .filter(p => p.orderStatus === "Cancelled")
-        .reduce((sum, p) => sum + (p.value || 0), 0);
-
-      const target = user.preferences?.monthlyTarget || 1100;
-      const totalActive = wip + delivered;
-      const need = target - totalActive;
-
-      const completedProjects = userProjects.filter(p => p.orderStatus === "Delivered" || p.orderStatus === "Completed");
-      const completedCount = completedProjects.length;
-      const stars = completedProjects.filter(p => p.star === 5).length; // Count of 5-star projects
-
-      return {
-        _id: user._id,
-        name: user.name,
-        avatar: user.avatar,
-        wip,
-        cancelled,
-        delivered,
-        totalActive,
-        target,
-        need,
-        stars,
-        projectCount: userProjects.length,
-        completedCount,
-        skills: user.skills
-      };
-    });
-
-    // Sort by totalActive to find top performer
-    const sorted = [...performanceData].sort((a, b) => b.totalActive - a.totalActive);
-    const topPerformer = sorted[0] || null;
+    const performanceData = users;
+    const topPerformer = performanceData[0] || null;
 
     return NextResponse.json({
       success: true,
       data: {
-        performance: sorted,
+        performance: performanceData,
         topPerformer,
         totalWip: performanceData.reduce((sum, d) => sum + d.wip, 0),
         totalCancelled: performanceData.reduce((sum, d) => sum + d.cancelled, 0),

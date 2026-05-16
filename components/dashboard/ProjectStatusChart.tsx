@@ -3,26 +3,31 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function ProjectStatusChart() {
-  const [data, setData] = useState<any[]>([]);
+  const { data: analytics, isLoading } = useAnalytics();
+  
+  const data = analytics?.statusDistribution || [];
+  const total = data.reduce((s: number, d: any) => s + d.value, 0);
 
-  useEffect(() => {
-    async function fetchDistribution() {
-      try {
-        const res = await fetch("/api/analytics");
-        const analytics = await res.json();
-        if (analytics.statusDistribution && analytics.statusDistribution.length > 0) {
-          setData(analytics.statusDistribution);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    fetchDistribution();
-  }, []);
-
-  const total = data.reduce((s, d) => s + d.value, 0);
+  if (isLoading) {
+    return (
+      <Card className="glass-card overflow-hidden">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-black tracking-tight">
+            Project Distribution
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[200px] w-full flex items-center justify-center">
+            <Skeleton className="w-40 h-40 rounded-full" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="glass-card overflow-hidden">

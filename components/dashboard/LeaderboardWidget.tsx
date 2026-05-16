@@ -6,7 +6,7 @@ import { Trophy, TrendingUp, Medal } from "lucide-react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
-import { getPusherClient } from "@/lib/pusher";
+import { useSocket } from "@/components/providers/SocketProvider";
 
 interface LeaderEntry {
   _id: string;
@@ -31,7 +31,7 @@ export function LeaderboardWidget() {
         .map((m: any) => ({
           _id: m._id,
           name: m.name,
-          performance_score: Math.round(m.totalActive / 10),
+          performance_score: Math.round(m.efficiencyScore || m.totalActive / 10),
           total_earnings: m.delivered,
           projects_completed: m.completedCount
         }));
@@ -39,20 +39,22 @@ export function LeaderboardWidget() {
     staleTime: 0,
   });
 
+  const { socket, isConnected } = useSocket();
+
   // Real-time synchronization [rt-sync-effect]
   useEffect(() => {
-    const pusher = getPusherClient();
-    const channel = pusher.subscribe("projects-channel");
-    
-    channel.bind("project-updated", () => {
+    if (!socket || !isConnected) return;
+
+    const handleProjectUpdated = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.performance.list() });
-    });
+    };
+
+    socket.on("project-updated", handleProjectUpdated);
 
     return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
+      socket.off("project-updated", handleProjectUpdated);
     };
-  }, [queryClient]);
+  }, [queryClient, socket, isConnected]);
 
   const medalColors = [
     "from-amber-400 to-amber-600",

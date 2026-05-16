@@ -3,12 +3,16 @@
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "react-hot-toast";
 import QueryProvider from "./providers/QueryProvider";
+import { SocketProvider } from "./providers/SocketProvider";
+import { CommandPalette } from "./dashboard/CommandPalette";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <QueryProvider>
-        {children}
+        <SocketProvider>
+          {children}
+        </SocketProvider>
         <Toaster
           position="top-right"
           toastOptions={{
@@ -28,6 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             },
           }}
         />
+        <CommandPalette />
       </QueryProvider>
     </SessionProvider>
   );

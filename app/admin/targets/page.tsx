@@ -22,6 +22,7 @@ import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useTeamPerformance } from "@/hooks/useTeamPerformance";
 
 interface TeamMember {
   _id: string;
@@ -44,7 +45,6 @@ export default function RevenueTargetsPage() {
   const isAdmin = userRole === "admin";
 
   const [members, setMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
   const [editedTargets, setEditedTargets] = useState<Record<string, number>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [savingAll, setSavingAll] = useState(false);
@@ -56,28 +56,18 @@ export default function RevenueTargetsPage() {
     }
   }, [session, isAdmin, router]);
 
+  const { data: teamPerformanceData, isLoading: loading } = useTeamPerformance();
+
   useEffect(() => {
-    async function fetchMembers() {
-      try {
-        const res = await fetch("/api/analytics/team-performance");
-        const json = await res.json();
-        if (json.success && json.data?.performance) {
-          setMembers(json.data.performance);
-          // Initialize edited targets with current values
-          const targets: Record<string, number> = {};
-          json.data.performance.forEach((m: TeamMember) => {
-            targets[m._id] = m.target || 1100;
-          });
-          setEditedTargets(targets);
-        }
-      } catch (e) {
-        console.error("Failed to fetch members:", e);
-      } finally {
-        setLoading(false);
-      }
+    if (teamPerformanceData && Array.isArray(teamPerformanceData)) {
+      setMembers(teamPerformanceData);
+      const targets: Record<string, number> = {};
+      teamPerformanceData.forEach((m: TeamMember) => {
+        targets[m._id] = m.target || 1100;
+      });
+      setEditedTargets(targets);
     }
-    if (isAdmin) fetchMembers();
-  }, [isAdmin]);
+  }, [teamPerformanceData]);
 
   const handleSaveOne = async (memberId: string) => {
     setSavingId(memberId);

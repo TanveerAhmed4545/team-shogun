@@ -17,6 +17,8 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
+import { useSocket } from "@/components/providers/SocketProvider";
+import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
 
 export default function ProfilePage() {
   const { data: session, status: sessionStatus, update } = useSession();
@@ -39,23 +41,24 @@ export default function ProfilePage() {
     enabled: !!session?.user?.id,
   });
 
+  const { socket, isConnected } = useSocket();
+  
   // Real-time synchronization [rt-sync-effect]
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!socket || !isConnected || !session?.user?.id) return;
     
-    const { getPusherClient } = require("@/lib/pusher");
-    const pusher = getPusherClient();
-    const channel = pusher.subscribe("projects-channel");
-    
-    channel.bind("project-updated", () => {
+    const handleUpdate = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.profile(session.user.id) });
-    });
+    };
+
+    socket.on("project-updated", handleUpdate);
+    socket.on("team-updated", handleUpdate);
 
     return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
+      socket.off("project-updated", handleUpdate);
+      socket.off("team-updated", handleUpdate);
     };
-  }, [session?.user?.id, queryClient]);
+  }, [socket, isConnected, session?.user?.id, queryClient]);
 
   // Local state for editing [file-separation]
   const [profile, setProfile] = useState<any>(null);
@@ -84,9 +87,16 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error("Save failed");
       return updatedProfile;
     },
-    onSuccess: () => {
+    onSuccess: (updatedProfile) => {
       toast.success("Profile saved successfully!");
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      // Update session to reflect changes in header
+      update({
+        user: {
+          ...session?.user,
+          name: updatedProfile.name,
+        }
+      });
     },
     onError: () => toast.error("Failed to save profile"),
   });
@@ -111,6 +121,16 @@ export default function ProfilePage() {
     onSuccess: (data) => {
       toast.success(`${data.type === "avatar" ? "Profile" : "Cover"} photo updated!`);
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      
+      // Update session if it was an avatar update
+      if (data.type === "avatar") {
+        update({
+          user: {
+            ...session?.user,
+            avatar: data.url,
+          }
+        });
+      }
     },
     onError: () => toast.error("Upload failed"),
   });
@@ -366,14 +386,8 @@ export default function ProfilePage() {
                   {activeTab === "activity" && (
                     <motion.div key="activity" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
                       <Card className="bg-white/[0.02] border-white/[0.05]">
-                        <CardContent className="p-6 sm:p-8 text-center py-20">
-                          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
-                            <TrendingUp className="w-8 h-8 text-emerald-500" />
-                          </div>
-                          <h3 className="text-xl font-black text-white mb-2">Activity Heatmap</h3>
-                          <p className="text-white/40 font-medium max-w-md mx-auto">
-                            Visual representation of project contributions over the last 6 months. (Data visualization module initializing...)
-                          </p>
+                        <CardContent className="p-6 sm:p-8">
+                          <ActivityHeatmap userId={session?.user?.id || ""} />
                         </CardContent>
                       </Card>
                     </motion.div>

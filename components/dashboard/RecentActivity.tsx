@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Package, DollarSign, Users, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSocket } from "@/components/providers/SocketProvider";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const actionIcons: Record<string, any> = {
   project: Package,
@@ -32,24 +35,61 @@ function timeAgo(date: string) {
 }
 
 export function RecentActivity() {
-  const [activities, setActivities] = useState<any[]>([]);
+  const queryClient = useQueryClient();
+  const { socket, isConnected } = useSocket();
+
+  const { data: activities = [], isLoading } = useQuery<any[]>({
+    queryKey: ["activities"],
+    queryFn: async () => {
+      const res = await fetch("/api/activities");
+      const json = await res.json();
+      if (!json.success) throw new Error("Failed to fetch activities");
+      return json.data?.activities || [];
+    },
+    staleTime: 60000,
+  });
 
   useEffect(() => {
-    async function fetchActivities() {
-      try {
-        const res = await fetch("/api/activities");
-        const json = await res.json();
-        if (json.success && json.data?.activities) {
-          setActivities(json.data.activities);
-        }
-      } catch (error) {
-        console.error("Failed to fetch activities:", error);
-      }
-    }
-    fetchActivities();
-    const interval = setInterval(fetchActivities, 30000); // Polling every 30s
-    return () => clearInterval(interval);
-  }, []);
+    if (!socket || !isConnected) return;
+
+    const handleActivity = () => {
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+    };
+
+    socket.on("project-updated", handleActivity);
+    socket.on("team-updated", handleActivity);
+
+    return () => {
+      socket.off("project-updated", handleActivity);
+      socket.off("team-updated", handleActivity);
+    };
+  }, [queryClient, socket, isConnected]);
+
+  if (isLoading) {
+    return (
+      <Card className="glass-card overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-black tracking-tight flex items-center space-x-2">
+            <Activity className="w-4 h-4 text-emerald-500" />
+            <span>Recent Activity</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-start space-x-3">
+                <Skeleton className="w-7 h-7 rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-2 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="glass-card overflow-hidden">

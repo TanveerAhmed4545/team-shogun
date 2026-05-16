@@ -208,9 +208,17 @@ export default function NotificationsPage() {
                           key={notif._id}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
+                          exit={{ opacity: 0, x: -100, height: 0, marginBottom: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className={`group relative flex flex-col sm:flex-row items-start gap-4 p-5 sm:p-6 rounded-2xl border backdrop-blur-sm transition-all overflow-hidden ${
+                          drag="x"
+                          dragConstraints={{ left: -100, right: 0 }}
+                          dragElastic={0.2}
+                          onDragEnd={(e, { offset, velocity }) => {
+                            if (offset.x < -80 || velocity.x < -500) {
+                              deleteNotif(notif._id);
+                            }
+                          }}
+                          className={`group relative flex flex-col sm:flex-row items-start gap-4 p-5 sm:p-6 rounded-2xl border backdrop-blur-sm transition-all overflow-hidden touch-pan-y ${
                             notif.read 
                               ? "bg-white/[0.01] border-white/[0.03] hover:bg-white/[0.03]" 
                               : "bg-white/[0.03] border-white/[0.08] shadow-lg shadow-black/20"

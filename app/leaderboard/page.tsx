@@ -17,7 +17,7 @@ import { getInitials } from "@/lib/utils";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
-import { getPusherClient } from "@/lib/pusher";
+import { useSocket } from "@/components/providers/SocketProvider";
 
 export default function LeaderboardPage() {
   const queryClient = useQueryClient();
@@ -33,21 +33,23 @@ export default function LeaderboardPage() {
     refetchInterval: 300000, // Reduced polling since we have real-time sync
   });
 
+  const { socket, isConnected } = useSocket();
+
   // Real-time synchronization [rt-sync-effect]
   useEffect(() => {
-    const pusher = getPusherClient();
-    const channel = pusher.subscribe("projects-channel");
-    
-    channel.bind("project-updated", () => {
+    if (!socket || !isConnected) return;
+
+    const handleProjectUpdated = () => {
       // Invalidate performance data when any project changes
       queryClient.invalidateQueries({ queryKey: queryKeys.performance.all });
-    });
+    };
+
+    socket.on("project-updated", handleProjectUpdated);
 
     return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
+      socket.off("project-updated", handleProjectUpdated);
     };
-  }, [queryClient]);
+  }, [queryClient, socket, isConnected]);
 
   if (loading) {
     return (

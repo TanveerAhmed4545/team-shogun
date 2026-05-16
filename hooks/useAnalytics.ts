@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
 import { useEffect } from "react";
-import { getPusherClient } from "@/lib/pusher";
+import { useSocket } from "@/components/providers/SocketProvider";
 
 export interface AnalyticsData {
   revenue: number;
@@ -10,26 +10,31 @@ export interface AnalyticsData {
   totalMembers: number;
   completionRate: number;
   cancelledRate: number;
+  statusDistribution: any[];
+  monthlyRevenue: any[];
 }
 
 export function useAnalytics() {
   const queryClient = useQueryClient();
 
+  const { socket, isConnected } = useSocket();
+
   // Real-time synchronization [rt-sync-effect]
   useEffect(() => {
-    const pusher = getPusherClient();
-    const channel = pusher.subscribe("projects-channel");
-    
-    channel.bind("project-updated", () => {
-      // Invalidate analytics data when any project changes
+    if (!socket || !isConnected) return;
+
+    const handleUpdate = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all });
-    });
+    };
+
+    socket.on("project-updated", handleUpdate);
+    socket.on("team-updated", handleUpdate);
 
     return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
+      socket.off("project-updated", handleUpdate);
+      socket.off("team-updated", handleUpdate);
     };
-  }, [queryClient]);
+  }, [queryClient, socket, isConnected]);
 
   return useQuery<AnalyticsData>({
     queryKey: queryKeys.analytics.all,
@@ -43,6 +48,8 @@ export function useAnalytics() {
         totalMembers: data.totalMembers || 0,
         completionRate: data.completionRate || 0,
         cancelledRate: data.cancelledRate || 0,
+        statusDistribution: data.statusDistribution || [],
+        monthlyRevenue: data.monthlyRevenue || [],
       };
     },
     staleTime: 60000,

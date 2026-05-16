@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
-import { getPusherClient } from "@/lib/pusher";
+import { useSocket } from "@/components/providers/SocketProvider";
 
 export function useTeamPerformance() {
   const queryClient = useQueryClient();
@@ -18,19 +18,23 @@ export function useTeamPerformance() {
     gcTime: 0, // Disable cache to force fresh data every time
   });
 
+  const { socket, isConnected } = useSocket();
+
   useEffect(() => {
-    const pusher = getPusherClient();
-    const channel = pusher.subscribe("projects-channel");
-    
-    channel.bind("project-updated", () => {
+    if (!socket || !isConnected) return;
+
+    const handleUpdate = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.performance.list() });
-    });
+    };
+
+    socket.on("project-updated", handleUpdate);
+    socket.on("team-updated", handleUpdate);
 
     return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
+      socket.off("project-updated", handleUpdate);
+      socket.off("team-updated", handleUpdate);
     };
-  }, [queryClient]);
+  }, [queryClient, socket, isConnected]);
 
   return query;
 }

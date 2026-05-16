@@ -107,8 +107,9 @@ export function ProjectTable({ refreshTrigger }: { refreshTrigger?: number }) {
         </Link>
       </CardHeader>
       <CardContent className="p-0">
-        <Table>
-          <TableHeader>
+        <div className="hidden sm:block overflow-x-auto">
+          <Table>
+            <TableHeader>
             <TableRow className="border-white/[0.04] hover:bg-transparent">
               <TableHead className="pl-6 text-[9px] uppercase tracking-[0.2em] font-black text-white/20">
                 Client
@@ -219,6 +220,65 @@ export function ProjectTable({ refreshTrigger }: { refreshTrigger?: number }) {
             )}
           </TableBody>
         </Table>
+        </div>
+
+        {/* Mobile Stacked Cards */}
+        <div className="sm:hidden flex flex-col divide-y divide-white/[0.04]">
+          {projects.length === 0 ? (
+            <div className="text-center py-12 text-white/20 text-sm">
+              No active projects found.
+            </div>
+          ) : (
+            projects.map((project: any) => {
+              const timeLeft = getTimeLeft(project.deadline, project.orderStatus);
+              const s = project.orderStatus?.toLowerCase();
+              const priority = (s === "completed" || s === "delivered") ? "Green" : autoPriority(project.deadline);
+              
+              return (
+                <div key={project._id} className="p-4 space-y-3 hover:bg-white/[0.02] transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-sm text-white/90">{project.clientName}</p>
+                      <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">
+                        {project.orderId}
+                      </p>
+                    </div>
+                    <span className="font-mono font-black text-emerald-500 text-sm">
+                      ${project.value}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => {
+                        const currentIndex = statusFlow.indexOf(project.orderStatus);
+                        if (currentIndex >= 0 && currentIndex < statusFlow.length - 1) {
+                          handleStatusChange(project._id, statusFlow[currentIndex + 1]);
+                        }
+                      }}
+                      className="cursor-pointer text-left"
+                    >
+                      <Badge
+                        variant="outline"
+                        className={`${statusStyles[project.orderStatus] || ""} font-bold text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full hover:opacity-80`}
+                      >
+                        {project.orderStatus}
+                      </Badge>
+                    </button>
+
+                    <div className="flex items-center space-x-2 bg-white/[0.03] px-2 py-1 rounded-md border border-white/5">
+                      <div className={`w-1.5 h-1.5 rounded-full ${priorityColors[priority]}`} />
+                      <Clock className={`w-3 h-3 ${timeLeft.color}`} />
+                      <span className={`text-[10px] font-bold ${timeLeft.color}`}>
+                        {timeLeft.text}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </CardContent>
     </Card>
   );

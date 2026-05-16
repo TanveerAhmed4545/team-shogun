@@ -41,6 +41,7 @@ import {
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { getTimeLeft } from "@/lib/utils/project";
+import Swal from "sweetalert2";
 
 const statusStyles: Record<string, string> = {
   Pending: "bg-amber-500/10 text-amber-500 border-amber-500/20",
@@ -92,9 +93,35 @@ export default function ProjectsPage() {
     statusMutation.mutate({ projectId, status: newStatus });
   };
 
-  const handleDelete = (projectId: string) => {
-    if (confirm("Delete this project?")) {
-      deleteMutation.mutate(projectId);
+  const handleDelete = async (projectId: string) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981', // emerald-500
+      cancelButtonColor: '#f43f5e', // rose-500
+      confirmButtonText: 'Yes, delete it!',
+      background: '#0B0F14',
+      color: '#fff',
+      customClass: {
+        popup: 'border border-white/10 rounded-2xl backdrop-blur-xl',
+      }
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await toast.promise(
+          deleteMutation.mutateAsync(projectId),
+          {
+            loading: 'Deleting project...',
+            success: 'Project deleted successfully',
+            error: 'Failed to delete project',
+          }
+        );
+      } catch (err) {
+        console.error("Delete error:", err);
+      }
     }
   };
 
@@ -193,7 +220,8 @@ export default function ProjectsPage() {
                 exit={{ opacity: 0, y: -10 }}
                 className="glass-card rounded-2xl overflow-hidden border border-white/[0.04]"
               >
-              <div className="overflow-x-auto">
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/[0.04] hover:bg-transparent h-14">
@@ -355,7 +383,7 @@ export default function ProjectsPage() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="rounded-xl hover:bg-blue-500/10 hover:text-blue-500 h-8 w-8 opacity-0 group-hover:opacity-100 transition-all"
+                                      className="rounded-xl hover:bg-blue-500/10 hover:text-blue-500 h-8 w-8 transition-all"
                                       onClick={() => {
                                         setEditProject(project);
                                         setEditOpen(true);
@@ -364,15 +392,17 @@ export default function ProjectsPage() {
                                       <Edit3 className="w-3.5 h-3.5" />
                                     </Button>
                                   )}
-                                  {isAdmin && (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="rounded-xl hover:bg-rose-500/10 hover:text-rose-500 h-8 w-8 opacity-0 group-hover:opacity-100 transition-all"
-                                      onClick={() => handleDelete(project._id)}
+                                  {(isAdmin || (project?.createdBy && session?.user?.id === project.createdBy.toString())) && (
+                                    <button
+                                      type="button"
+                                      className="rounded-xl hover:bg-rose-500/10 hover:text-rose-500 h-8 w-8 transition-all flex items-center justify-center cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(project._id);
+                                      }}
                                     >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </Button>
+                                      <Trash2 className="w-3.5 h-3.5 pointer-events-none" />
+                                    </button>
                                   )}
                                 </div>
                               </TableCell>
@@ -381,6 +411,112 @@ export default function ProjectsPage() {
                         })}
                   </TableBody>
                 </Table>
+              </div>
+
+              {/* Mobile Stacked Cards View */}
+              <div className="md:hidden flex flex-col divide-y divide-white/[0.04]">
+                {loading
+                  ? Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="p-4 space-y-4">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                        <div className="flex justify-between">
+                          <Skeleton className="h-6 w-20 rounded-full" />
+                          <Skeleton className="h-6 w-16" />
+                        </div>
+                      </div>
+                    ))
+                  : filteredProjects.length === 0
+                  ? (
+                      <div className="text-center py-12">
+                        <Clock className="w-10 h-10 text-white/10 mx-auto mb-3" />
+                        <p className="text-white/20 font-bold">No projects match your filters.</p>
+                      </div>
+                    )
+                  : filteredProjects.map((project: any) => {
+                      const timeLeft = getTimeLeft(project.deadline, project.orderStatus);
+                      return (
+                        <div key={project._id} className="p-4 space-y-4 hover:bg-white/[0.02] transition-colors">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-bold text-sm text-white/90">{project.clientName}</p>
+                              <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">
+                                {project.orderId} · {project.profileName}
+                              </p>
+                            </div>
+                            <span className="font-mono font-black text-emerald-500 text-sm">
+                              ${project.value}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <Select
+                              value={project.orderStatus}
+                              onValueChange={(val) => handleStatusChange(project._id, val)}
+                            >
+                              <SelectTrigger className="w-[110px] h-7 bg-white/[0.03] border-white/10 text-[10px] font-bold p-0 px-2 focus:ring-0">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-[#12181F] border-white/10 text-white">
+                                {[...kanbanColumns, "Cancelled"].map((s) => (
+                                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+
+                            <div className="flex items-center space-x-1.5 bg-white/[0.03] px-2 py-1 rounded-md border border-white/5">
+                              <Clock className={`w-3 h-3 ${timeLeft.color}`} />
+                              <span className={`text-[10px] font-bold ${timeLeft.color}`}>
+                                {timeLeft.text}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center">
+                                <User className="w-3 h-3 text-white/30" />
+                              </div>
+                              <span className="text-xs font-bold text-white/50">
+                                {project.developer?.name || "Unassigned"}
+                              </span>
+                            </div>
+                            
+                            <div className="flex items-center gap-1">
+                              {(isAdmin || 
+                                session?.user?.id === project.developer?.id?._id?.toString() || 
+                                session?.user?.id === project.developer?.id?.toString() || 
+                                session?.user?.id === project.createdBy?.toString() ||
+                                session?.user?.name === project.developer?.name) && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-lg bg-white/[0.03] hover:bg-blue-500/10 hover:text-blue-500"
+                                  onClick={() => {
+                                    setEditProject(project);
+                                    setEditOpen(true);
+                                  }}
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
+                              {(isAdmin || (project?.createdBy && session?.user?.id === project.createdBy.toString())) && (
+                                <button
+                                  type="button"
+                                  className="h-8 w-8 rounded-lg bg-white/[0.03] hover:bg-rose-500/10 hover:text-rose-500 flex items-center justify-center cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(project._id);
+                                  }}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 pointer-events-none" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
               </div>
               </motion.div>
             ) : (

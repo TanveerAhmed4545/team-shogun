@@ -30,6 +30,7 @@ import toast from "react-hot-toast";
 
 import { useUsers, useUpdateUser, useDeleteUser } from "@/hooks/useUsers";
 import { useTeamPerformance } from "@/hooks/useTeamPerformance";
+import Swal from "sweetalert2";
 
 export default function TeamPage() {
   const { data: session } = useSession();
@@ -54,9 +55,37 @@ export default function TeamPage() {
     updateMutation.mutate({ userId, data: { role: newRole } });
   };
 
-  const handleDelete = (userId: string) => {
-    if (confirm("Remove this team member?")) {
-      deleteMutation.mutate(userId);
+  const handleDelete = async (userId: string) => {
+    const result = await Swal.fire({
+      title: "Remove Member?",
+      text: "This action will permanently delete this member from the agency. This cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#10b981", // emerald-500
+      cancelButtonColor: "#f43f5e", // rose-500
+      confirmButtonText: "Yes, remove them!",
+      cancelButtonText: "Cancel",
+      background: "#0B0F14",
+      color: "#fff",
+      customClass: {
+        popup: "border border-white/10 rounded-2xl backdrop-blur-xl shadow-2xl",
+        title: "font-black tracking-tight",
+        htmlContainer: "text-white/60 font-medium",
+        confirmButton: "rounded-xl font-bold px-6",
+        cancelButton: "rounded-xl font-bold px-6",
+      },
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await toast.promise(deleteMutation.mutateAsync(userId), {
+          loading: "Removing member...",
+          success: "Member removed successfully",
+          error: "Failed to remove member",
+        });
+      } catch (err) {
+        console.error("Delete error:", err);
+      }
     }
   };
 
@@ -247,13 +276,9 @@ export default function TeamPage() {
                           </Link>
                           {isAdmin && session?.user?.id !== member._id && (
                             <DropdownMenu>
-                              <DropdownMenuTrigger
-                                render={
-                                  <button className="rounded-xl hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 flex items-center justify-center">
-                                    <MoreHorizontal className="w-4 h-4" />
-                                  </button>
-                                }
-                              />
+                              <DropdownMenuTrigger className="rounded-xl hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 flex items-center justify-center">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </DropdownMenuTrigger>
                               <DropdownMenuContent className="bg-[#12181F] border-white/10 text-white">
                                 <DropdownMenuItem
                                   onClick={() =>

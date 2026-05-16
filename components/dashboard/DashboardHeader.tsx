@@ -18,103 +18,44 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useSidebar } from "./DashboardSidebar";
 import Image from "next/image";
-import { getPusherClient } from "@/lib/pusher";
+import { useNotifications } from "@/hooks/useNotifications";
 
 export function DashboardHeader() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const { setMobileOpen } = useSidebar();
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [loadingNotifs, setLoadingNotifs] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState<{projects: any[], users: any[], navigation: any[]}>({projects: [], users: [], navigation: []});
-  const [searching, setSearching] = useState(false);
+  const { notifications, unreadCount, markAsRead } = useNotifications();
 
+  const [hasSynced, setHasSynced] = useState(false);
+
+  // Sync session if avatar is missing or stale [session-sync-effect]
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults({projects: [], users: [], navigation: []});
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setSearching(true);
-      try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
-        const json = await res.json();
-        if (json.success) {
-          setSearchResults(json.data);
-        }
-      } catch (error) {
-        console.error("Search failed", error);
-      } finally {
-        setSearching(false);
-      }
-    }, 300); // 300ms debounce
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const fetchNotifications = async () => {
-    setLoadingNotifs(true);
-    try {
-      const res = await fetch("/api/notifications");
-      const json = await res.json();
-      if (json.success && json.data?.notifications) {
-        setNotifications(json.data.notifications.slice(0, 4));
-      }
-    } catch (error) {
-      console.error("Failed to fetch notifications", error);
-    } finally {
-      setLoadingNotifs(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-    
-    if (session?.user?.id) {
-      const pusher = getPusherClient();
-      
-      // Subscribe to user-specific channel
-      const userChannel = pusher.subscribe(`user-${session.user.id}`);
-      userChannel.bind("notification-received", (notif: any) => {
-        setNotifications(prev => [notif, ...prev.slice(0, 3)]);
-      });
-      
-      // Subscribe to admin channel if admin
-      const isAdmin = ((session.user as unknown) as { role?: string })?.role === "admin";
-      let adminChannel: any;
-      
-      if (isAdmin) {
-        adminChannel = pusher.subscribe("admin-channel");
-        adminChannel.bind("notification-received", (notif: any) => {
-          setNotifications(prev => [notif, ...prev.slice(0, 3)]);
-        });
-      }
-      
-      return () => {
-        userChannel.unbind_all();
-        userChannel.unsubscribe();
-        if (isAdmin && adminChannel) {
-          adminChannel.unbind_all();
-          adminChannel.unsubscribe();
+    if (session?.user?.id && !session.user.avatar && !hasSynced) {
+      setHasSynced(true);
+      const syncSession = async () => {
+        try {
+          const res = await fetch(`/api/users/${session.user.id}`);
+          const json = await res.json();
+          if (json.success && json.data.user.avatar) {
+            update({
+              user: {
+                ...session.user,
+                avatar: json.data.user.avatar,
+                name: json.data.user.name,
+              }
+            });
+          }
+        } catch (err) {
+          console.warn("Session sync failed:", err);
         }
       };
+      syncSession();
     }
-  }, [session]);
+  }, [session?.user?.id, session?.user?.avatar, update, hasSynced]);
+  // Legacy local search states removed in favor of global CommandPalette
 
-  // Handle global search shortcut
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        const searchInput = document.getElementById("global-search");
-        searchInput?.focus();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  const openCommandPalette = () => {
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+  };
 
   return (
     <header className="h-14 sm:h-16 border-b border-white/[0.04] bg-[#0B0F14]/60 backdrop-blur-2xl sticky top-0 z-40">
@@ -129,89 +70,21 @@ export function DashboardHeader() {
             <Menu className="w-5 h-5 text-white/50" />
           </button>
 
-          {/* Search bar */}
-          <div className="relative group flex-1 max-w-xs sm:max-w-sm md:max-w-md hidden sm:block">
-            <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-emerald-500 transition-colors" />
-            <Input
-              id="global-search"
-              placeholder="Search dashboard..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 sm:pl-11 pr-12 bg-white/[0.03] border-white/[0.04] focus:border-emerald-500/40 focus:ring-emerald-500/10 transition-all rounded-xl h-9 sm:h-10 text-sm placeholder:text-white/15 w-full"
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-[9px] font-black text-white/30 group-focus-within:opacity-0 transition-opacity">
+          {/* Search bar trigger */}
+          <button
+            onClick={openCommandPalette}
+            className="group flex-1 max-w-xs sm:max-w-sm md:max-w-md hidden sm:flex items-center gap-3 px-3 sm:px-4 h-9 sm:h-10 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04] hover:border-emerald-500/40 rounded-xl transition-all"
+          >
+            <Search className="w-4 h-4 text-white/20 group-hover:text-emerald-500 transition-colors" />
+            <span className="text-sm text-white/20 group-hover:text-white/40 flex-1 text-left">Search dashboard...</span>
+            <div className="hidden md:flex items-center gap-1 px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-[9px] font-black text-white/30">
               <span className="text-[10px]">⌘</span>K
             </div>
-
-            {/* Search Dropdown */}
-            {searchQuery.trim() && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-[#12181F] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
-                {searching ? (
-                  <div className="p-4 text-center text-white/40 text-sm flex items-center justify-center gap-2">
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Searching...</span>
-                  </div>
-                ) : (searchResults.projects.length === 0 && searchResults.users.length === 0 && searchResults.navigation.length === 0) ? (
-                  <div className="p-4 text-center text-white/40 text-sm">No results found</div>
-                ) : (
-                  <div className="max-h-[300px] overflow-y-auto p-2 space-y-2">
-                    {searchResults.navigation.length > 0 && (
-                      <div>
-                        <div className="text-[10px] font-black uppercase tracking-wider text-white/20 px-2 py-1">Navigation</div>
-                        {searchResults.navigation.map((item: any) => (
-                          <Link href={item.link} key={item.link} onClick={() => setSearchQuery("")}>
-                            <div className="p-2 hover:bg-white/[0.04] rounded-lg cursor-pointer text-sm text-white/70 hover:text-white transition-colors">
-                              {item.title}
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {searchResults.projects.length > 0 && (
-                      <div>
-                        <div className="text-[10px] font-black uppercase tracking-wider text-white/20 px-2 py-1">Projects</div>
-                        {searchResults.projects.map((item: any) => (
-                          <Link href={`/projects`} key={item.orderId} onClick={() => setSearchQuery("")}>
-                            <div className="p-2 hover:bg-white/[0.04] rounded-lg cursor-pointer flex justify-between items-center">
-                              <div className="min-w-0">
-                                <p className="text-sm font-semibold text-white/90 truncate">{item.clientName}</p>
-                                <p className="text-[10px] text-white/30">{item.orderId}</p>
-                              </div>
-                              <Badge className="text-[9px] uppercase tracking-wider">{item.orderStatus}</Badge>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-
-                    {searchResults.users.length > 0 && (
-                      <div>
-                        <div className="text-[10px] font-black uppercase tracking-wider text-white/20 px-2 py-1">Team Members</div>
-                        {searchResults.users.map((item: any) => (
-                          <Link href={`/team`} key={item._id} onClick={() => setSearchQuery("")}>
-                            <div className="p-2 hover:bg-white/[0.04] rounded-lg cursor-pointer flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xs font-bold">
-                                {item.name.charAt(0)}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-semibold text-white/90 truncate">{item.name}</p>
-                                <p className="text-[10px] text-white/30 capitalize">{item.role}</p>
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          </button>
 
           {/* Mobile search icon */}
           <button
-            onClick={() => setSearchOpen(!searchOpen)}
+            onClick={openCommandPalette}
             className="p-2 rounded-xl hover:bg-white/[0.06] transition-colors sm:hidden shrink-0"
           >
             <Search className="w-4 h-4 text-white/40" />
@@ -232,24 +105,36 @@ export function DashboardHeader() {
           <DropdownMenu>
             <DropdownMenuTrigger render={<button className="p-2 rounded-xl hover:bg-white/[0.04] relative border border-white/[0.04] transition-all active:scale-95 group outline-none" />}>
                 <Bell className="w-4 h-4 text-white/30 group-hover:text-white/70 transition-colors" />
-                {notifications.some(n => !n.read) && (
+                {unreadCount > 0 && (
                   <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#0B0F14]" />
                 )}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[280px] sm:w-[320px] md:w-[380px] bg-[#12181F] border border-white/10 p-0 overflow-hidden text-white shadow-2xl">
               <div className="flex items-center justify-between p-3 sm:p-4 border-b border-white/10">
                 <span className="font-bold text-sm">Notifications</span>
-                <button onClick={fetchNotifications} className="text-white/40 hover:text-white transition-colors" disabled={loadingNotifs}>
-                  <RefreshCw className={`w-4 h-4 ${loadingNotifs ? 'animate-spin' : ''}`} />
-                </button>
+                {unreadCount > 0 && (
+                  <button 
+                    onClick={() => markAsRead.mutate({ markAll: true })}
+                    className="text-[10px] uppercase font-bold text-emerald-500 hover:text-emerald-400 transition-colors"
+                  >
+                    Mark all read
+                  </button>
+                )}
               </div>
               <div className="max-h-[260px] sm:max-h-[300px] overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-8 text-center text-white/40 text-sm">No new notifications</div>
                 ) : (
-                  notifications.map((notif) => (
-                    <div key={notif._id} className="p-3 sm:p-4 border-b border-white/5 hover:bg-white/[0.02] transition-colors flex gap-3 cursor-pointer">
-                      <div className="shrink-0 mt-0.5">
+                  notifications.slice(0, 4).map((notif: any) => (
+                    <div 
+                      key={notif._id} 
+                      onClick={() => {
+                        if (!notif.read) markAsRead.mutate({ id: notif._id });
+                      }}
+                      className={`p-3 sm:p-4 border-b border-white/5 hover:bg-white/[0.04] transition-colors flex gap-3 cursor-pointer ${!notif.read ? 'bg-white/[0.02]' : ''}`}
+                    >
+                      <div className="shrink-0 mt-0.5 relative">
+                        {!notif.read && <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full" />}
                         {notif.type === "payment" ? (
                           <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
                             <TrendingUp className="w-4 h-4" />
@@ -265,7 +150,9 @@ export function DashboardHeader() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white/90 truncate">{notif.title}</p>
+                        <p className={`text-sm truncate ${!notif.read ? 'font-bold text-white' : 'font-medium text-white/70'}`}>
+                          {notif.title}
+                        </p>
                         <p className="text-xs text-white/50 mt-0.5 line-clamp-2">{notif.message}</p>
                         <p className="text-[10px] text-white/30 mt-1 font-medium">
                           {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
@@ -351,21 +238,7 @@ export function DashboardHeader() {
         </div>
       </div>
 
-      {/* Mobile search expand */}
-      {searchOpen && (
-        <div className="absolute top-full left-0 right-0 p-3 bg-[#0B0F14]/95 backdrop-blur-xl border-b border-white/[0.04] sm:hidden z-50">
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-emerald-500" />
-            <Input
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-white/[0.03] border-white/[0.04] focus:border-emerald-500/40 rounded-xl h-10 text-sm placeholder:text-white/15 w-full"
-              autoFocus
-            />
-          </div>
-        </div>
-      )}
+      {/* Mobile search expand handled by global palette now */}
     </header>
   );
 }

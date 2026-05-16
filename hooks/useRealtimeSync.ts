@@ -1,29 +1,22 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getPusherClient } from "@/lib/pusher";
+import { useSocket } from "@/components/providers/SocketProvider";
 import { queryKeys } from "@/lib/queries/keys";
 import toast from "react-hot-toast";
 
 export function useRealtimeSync() {
   const queryClient = useQueryClient();
+  const { socket, isConnected } = useSocket();
 
   useEffect(() => {
-    const pusherClient = getPusherClient();
-    if (!pusherClient) return;
+    if (!socket || !isConnected) return;
 
-    // 1. Subscribe to the relevant channels
-    const projectChannel = pusherClient.subscribe("projects-channel");
-    const analyticsChannel = pusherClient.subscribe("analytics-channel");
-    const teamChannel = pusherClient.subscribe("team-channel");
-
-    // 2. Listen for "PROJECT_UPDATED"
-    projectChannel.bind("project-updated", (data: any) => {
+    const handleProjectUpdated = (data: any) => {
       console.log("Realtime: Project Updated", data);
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all });
       
-      // Optional: Toast for other users' actions
-      if (data.userId !== "self") { // We'll handle self-id later if needed
+      if (data?.userId !== "self") { 
         toast("Dashboard updated via live sync", {
           icon: "🔄",
           style: {
@@ -35,20 +28,20 @@ export function useRealtimeSync() {
           },
         });
       }
-    });
-
-    // 3. Listen for "TEAM_UPDATED"
-    teamChannel.bind("team-updated", () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-    });
-
-    // Cleanup on unmount
-    return () => {
-      if (pusherClient) {
-        pusherClient.unsubscribe("projects-channel");
-        pusherClient.unsubscribe("analytics-channel");
-        pusherClient.unsubscribe("team-channel");
-      }
     };
-  }, [queryClient]);
+
+    const handleTeamUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+    };
+
+    // Listen to events on the global dashboard channel
+    // Note: The server emits these events to the 'dashboard-channel' room
+    socket.on("project-updated", handleProjectUpdated);
+    socket.on("team-updated", handleTeamUpdated);
+
+    return () => {
+      socket.off("project-updated", handleProjectUpdated);
+      socket.off("team-updated", handleTeamUpdated);
+    };
+  }, [queryClient, socket, isConnected]);
 }

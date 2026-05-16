@@ -5,7 +5,6 @@ import {
   LayoutDashboard,
   Briefcase,
   Users,
-  DollarSign,
   Bell,
   Settings,
   ChevronLeft,
@@ -15,6 +14,7 @@ import {
   Target,
   Shield,
   Trophy,
+  Activity
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -33,6 +33,7 @@ const menuItems = [
 
 const adminItems = [
   { icon: Target, label: "Revenue Targets", href: "/admin/targets" },
+  { icon: Activity, label: "Audit Logs", href: "/admin/logs" },
 ];
 
 // Context so header can trigger sidebar open
@@ -261,6 +262,33 @@ export function DashboardSidebar() {
           onClick={() => setMobileOpen(false)}
         />
       )}
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0B0F14]/90 backdrop-blur-2xl border-t border-white/[0.06] pb-safe">
+        <div className="flex items-center justify-around px-2 py-2">
+          {menuItems.slice(0, 5).map((item) => {
+            const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            return (
+              <Link 
+                key={item.label} 
+                href={item.href}
+                className={cn(
+                  "flex flex-col items-center justify-center w-14 h-12 rounded-xl transition-all duration-200 relative",
+                  isActive ? "text-emerald-500" : "text-white/40 hover:text-white/80"
+                )}
+              >
+                {isActive && (
+                  <div className="absolute inset-0 bg-emerald-500/10 rounded-xl" />
+                )}
+                <item.icon className={cn("w-5 h-5 mb-1 z-10", isActive && "drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]")} />
+                <span className="text-[9px] font-bold tracking-tight z-10 truncate w-full text-center px-0.5">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
     </>
   );
 }

@@ -1,23 +1,35 @@
-const mongoose = require('mongoose');
-require('dotenv').config({ path: '.env.local' });
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+import dbConnect from "../lib/db.js";
+import User from "../models/User.js";
+import Project from "../models/Project.js";
 
-async function checkData() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('Connected to MongoDB');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  const Project = mongoose.models.Project || mongoose.model('Project', new mongoose.Schema({}, { strict: false }));
+dotenv.config({ path: path.join(__dirname, "..", ".env.local") });
 
-  const projects = await Project.find({});
 
-  console.log('Projects Star Ratings:', projects.map(p => ({ 
-    id: p._id, 
-    orderId: p.orderId, 
-    developer: p.developer?.name,
-    star: p.star,
-    status: p.orderStatus
-  })));
-
-  process.exit();
+async function checkDB() {
+  await dbConnect();
+  const userCount = await User.countDocuments();
+  const activeUsers = await User.countDocuments({ status: "active" });
+  const projectCount = await Project.countDocuments();
+  
+  console.log({
+    userCount,
+    activeUsers,
+    projectCount
+  });
+  
+  const users = await User.find({ status: "active" }).limit(5);
+  console.log("Active Users Sample:", users.map(u => ({ id: u._id, name: u.name, avatar: u.avatar, status: u.status })));
+  
+  process.exit(0);
 }
 
-checkData();
+checkDB().catch(err => {
+  console.error(err);
+  process.exit(1);
+});

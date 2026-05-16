@@ -8,8 +8,10 @@ export async function GET(req) {
     const session = await getServerSession(authOptions);
     if (!session) return ApiResponse.unauthorized();
 
+    const { searchParams } = new URL(req.url);
+    const limit = parseInt(searchParams.get("limit") || "10");
     const userId = session.user.role === "admin" ? null : session.user.id;
-    const activities = await activityService.getRecentActivities(10, userId);
+    const activities = await activityService.getRecentActivities(limit, userId);
     
     return ApiResponse.success({ activities });
   } catch (error) {

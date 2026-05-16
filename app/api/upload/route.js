@@ -2,11 +2,19 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
+import { checkRateLimit } from "@/lib/utils/rate-limit";
+
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.status !== "active") {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate Limiting: Max 5 uploads per minute per user
+    const isAllowed = checkRateLimit(`upload_${session.user.id}`, 5, 60000);
+    if (!isAllowed) {
+      return NextResponse.json({ message: "Too many upload requests. Try again in a minute." }, { status: 429 });
     }
 
     const formData = await req.formData();
