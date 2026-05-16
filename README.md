@@ -10,13 +10,12 @@
 
 ---
 
-## 🚀 Recent Core Upgrades (Production v2.6)
-- **🔍 Global Instant Search**: Debounced search for projects, members, and navigation directly from the dashboard header.
-- **👤 High-Fidelity Member Profiles**: Glassmorphic profile pages featuring interactive earnings charts, skill badges, and active project tables.
-- **⚡ Real-Time Engine (Pusher)**: Full-stack live synchronization. KPIs, charts, and leaderboards update instantly across all sessions.
-- **🛡️ Privacy-First Activity**: Role-based visibility for activity feeds. Members see their own actions; Admins manage the entire agency log.
-- **📈 Dynamic Performance Logic**: Advanced MongoDB aggregation for real-time leaderboard rankings based on live revenue and stars.
-- **🔄 Optimized Data Sync**: Disabled aggressive caching for real-time performance tracking and fixed project filtering logic.
+## 🚀 Recent Core Upgrades (Production v3.0 - Hardened)
+- **⚡ Resilient Real-Time Sync**: Replaced third-party Pusher with a high-performance internal **Socket.io** server. Integrated a **polling fallback** to ensure 100% dashboard uptime on serverless platforms like Vercel.
+- **⏰ Tiered Deadline Alerts**: Automated cron system with **72h (Warning)** and **24h (Critical)** alerts. Includes color-coded email templates and in-app notifications for developers.
+- **🛡️ Hardened Administrative Workflows**: Integrated **SweetAlert2** for high-fidelity confirmation dialogs. Implemented strict RBAC enforcement on project deletions and team management.
+- **👤 Instant Session Synchronization**: Automatic avatar and profile sync across all dashboard components (Header, Sidebar, Profile) using real-time session hydration.
+- **📈 Production-Safe Seeding**: Refactored database maintenance tools to allow for "Safe Seeds" that preserve production data while ensuring core administrative access.
 
 ## 🌟 Key Features
 
@@ -27,26 +26,22 @@
 
 ### 📝 Agile Project Management
 - **Status Lifecycle**: Standardized workflow through `Pending`, `WIP`, `Revision`, `Delivered`, `Completed`, and `Cancelled`.
-- **Dynamic Time Tracking**: Auto-calculating deadlines with color-coded priority alerts (Green/Yellow/Red).
+- **Dynamic Time Tracking**: Auto-calculating deadlines with tiered alerts (72h Email/24h Critical).
 - **Activity Audit Trail**: Secure, role-filtered history of every project update and status transition.
 
 ### 🔒 Enterprise RBAC & Security
 - **Admin Command**: Global visibility, user management, project deletion, and financial overrides.
 - **Developer Focus**: Secure access to assigned projects with instant status update capabilities.
-- **Data Privacy**: Strict row-level security for notifications and activities. Members can only access their personal operational data.
-
-### 👥 Team Performance System
-- **Dynamic Leaderboard**: Real-time ranking of team members based on delivered revenue and customer stars.
-- **Revenue Targets**: Administrative control panel for setting and monitoring individual monthly revenue goals.
-- **Profile Synchronization**: stylized high-fidelity avatars and initials system for consistent professional appearance.
+- **Data Privacy**: Strict row-level security for notifications and activities.
 
 ---
 
 ## 🛠 Tech Stack
 
 - **Framework:** [Next.js](https://nextjs.org/) (App Router, Server Actions, API Routes)
-- **Frontend / UI:** React, Tailwind CSS, [Framer Motion](https://www.framer.com/motion/) (Animations), [shadcn/ui](https://ui.shadcn.com/)
-- **Authentication:** [NextAuth.js](https://next-auth.js.org/) (Credentials Provider with Role/Status mapping)
+- **Frontend / UI:** React, Tailwind CSS, [Framer Motion](https://www.framer.com/motion/), [SweetAlert2](https://sweetalert2.github.io/)
+- **Real-Time:** Socket.io (with internal Polling Fallback for Serverless)
+- **Authentication:** [NextAuth.js](https://next-auth.js.org/)
 - **Database:** MongoDB (via Mongoose)
 - **Deployment:** Vercel
 
@@ -56,38 +51,39 @@
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/team-shogun.git
+git clone https://github.com/TanveerAhmed4545/team-shogun.git
 cd team-shogun
 ```
 
 ### 2. Install dependencies
 ```bash
 npm install
-# or
-yarn install
 ```
 
 ### 3. Setup Environment Variables
-Create a `.env.local` file in the root directory and configure the following variables:
+Create a `.env.local` file in the root directory:
 
 ```env
-# Database connection string
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/team-shogun
+# Database
+MONGODB_URI=your_mongodb_uri
 
-# NextAuth Configuration
+# NextAuth
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your_super_secret_string
+NEXTAUTH_SECRET=your_secret
 
-# Node Environment
-NODE_ENV=development
+# Real-Time (Socket.io)
+NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
+INTERNAL_SOCKET_URL=http://localhost:4000
+
+# Security & Cron
+CRON_SECRET=your_cron_secret
 ```
 
-### 4. Run the Development Server
+### 4. Run the Development Environment
+This will start both the **Next.js Dev Server** and the **Standalone Socket.io Server** concurrently.
 ```bash
 npm run dev
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ---
 
@@ -97,22 +93,10 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 | :--- | :---: | :---: | :---: | :---: |
 | **Login / Register** | ✅ | ✅ | ✅ | ✅ |
 | **View Dashboard** | ✅ | ✅ | ✅ | ❌ |
-| **View Projects** | ✅ | ✅ | ✅ | ❌ |
 | **Edit Projects** | ✅ | ✅ | ❌ | ❌ |
 | **Delete Projects** | ✅ | ❌ | ❌ | ❌ |
-| **View Team Roster** | ✅ | ✅ | ✅ | ❌ |
-| **Approve/Reject Users** | ✅ | ❌ | ❌ | ❌ |
-| **Change User Roles** | ✅ | ❌ | ❌ | ❌ |
-| **View Global Notifications**| ✅ | ❌ | ❌ | ❌ |
-
----
-
-## 🤝 Contributing
-Contributions, issues, and feature requests are welcome!
-Feel free to check the [issues page](https://github.com/your-username/team-shogun/issues).
-
-## 📄 License
-This project is proprietary and confidential. Unauthorized copying of this file, via any medium, is strictly prohibited.
+| **Manage Team** | ✅ | ❌ | ❌ | ❌ |
+| **Tiered Deadline Alerts**| ✅ | ✅ | ✅ | ❌ |
 
 ---
 
