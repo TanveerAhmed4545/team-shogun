@@ -9,39 +9,43 @@ export function useRealtimeSync() {
   const { socket, isConnected } = useSocket();
 
   useEffect(() => {
-    if (!socket || !isConnected) return;
+    // 1. Standalone Socket.io Logic (Local/Custom Server)
+    if (socket && isConnected) {
+      const handleProjectUpdated = (data: any) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all });
+        
+        if (data?.userId !== "self") { 
+          toast("Dashboard updated via live sync", { icon: "🔄" });
+        }
+      };
 
-    const handleProjectUpdated = (data: any) => {
-      console.log("Realtime: Project Updated", data);
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all });
-      
-      if (data?.userId !== "self") { 
-        toast("Dashboard updated via live sync", {
-          icon: "🔄",
-          style: {
-            background: "#12181F",
-            color: "#fff",
-            border: "1px solid rgba(255,255,255,0.1)",
-            fontSize: "12px",
-            fontWeight: "bold",
-          },
-        });
-      }
-    };
+      const handleTeamUpdated = () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      };
 
-    const handleTeamUpdated = () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-    };
+      socket.on("project-updated", handleProjectUpdated);
+      socket.on("team-updated", handleTeamUpdated);
 
-    // Listen to events on the global dashboard channel
-    // Note: The server emits these events to the 'dashboard-channel' room
-    socket.on("project-updated", handleProjectUpdated);
-    socket.on("team-updated", handleTeamUpdated);
+      return () => {
+        socket.off("project-updated", handleProjectUpdated);
+        socket.off("team-updated", handleTeamUpdated);
+      };
+    }
 
-    return () => {
-      socket.off("project-updated", handleProjectUpdated);
-      socket.off("team-updated", handleTeamUpdated);
-    };
+    // 2. Production Fallback: Background Polling [resilient-fallback]
+    // Since Vercel doesn't support persistent WebSockets, we poll every 10s if socket is offline.
+    if (!isConnected) {
+      console.log("Realtime: Socket offline, starting production polling fallback...");
+      const pollInterval = setInterval(() => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+        // Only invalidate team once in a while to save resources
+        if (Math.random() > 0.7) {
+           queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+        }
+      }, 10000); // 10 second refresh
+
+      return () => clearInterval(pollInterval);
+    }
   }, [queryClient, socket, isConnected]);
 }
