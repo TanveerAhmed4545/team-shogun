@@ -85,8 +85,8 @@ function NavItem({
         "flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group relative",
         collapsed && "justify-center px-0",
         isActive
-          ? "bg-emerald-500/10 text-emerald-500 shadow-[inset_0_0_20px_rgba(34,197,94,0.05)]"
-          : "text-white/40 hover:bg-white/[0.04] hover:text-white/80"
+          ? "bg-primary/10 text-primary shadow-[inset_0_0_20px_rgba(34,197,94,0.05)]"
+          : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
       )}
     >
       {isActive && (
@@ -96,7 +96,7 @@ function NavItem({
         <item.icon
           className={cn(
             "w-[18px] h-[18px] transition-colors shrink-0",
-            isActive ? "text-emerald-500" : "group-hover:text-white/70"
+            isActive ? "text-primary" : "group-hover:text-foreground"
           )}
         />
         {!collapsed && (
@@ -145,7 +145,7 @@ export function DashboardSidebar() {
     <>
       <aside
         className={cn(
-          "border-r border-white/[0.06] bg-[#0B0F14]/95 backdrop-blur-2xl flex flex-col h-screen sticky top-0 transition-all duration-300 z-50",
+          "border-r border-border/10 bg-background/95 backdrop-blur-2xl flex flex-col h-screen sticky top-0 transition-all duration-300 z-50",
           collapsed ? "w-20" : "w-[260px]",
           // Mobile: fixed overlay
           "max-md:fixed max-md:left-0 max-md:top-0 max-md:h-full",
@@ -159,7 +159,7 @@ export function DashboardSidebar() {
               <span className="text-white font-black text-lg italic">S</span>
             </div>
             {!collapsed && (
-              <h1 className="text-xl font-black tracking-[-0.05em] bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent">
+              <h1 className="text-xl font-black tracking-[-0.05em] bg-gradient-to-r from-foreground to-foreground/50 bg-clip-text text-transparent">
                 SHOGUN
               </h1>
             )}
@@ -169,8 +169,8 @@ export function DashboardSidebar() {
           <button
             onClick={() => setCollapsed(!collapsed)}
             className={cn(
-              "p-1.5 rounded-lg hover:bg-white/5 text-white/30 hover:text-white/60 transition-all hidden md:flex",
-              collapsed && "absolute -right-3 top-8 bg-card border border-white/10 rounded-full shadow-lg"
+              "p-1.5 rounded-lg hover:bg-accent/10 text-muted-foreground hover:text-foreground transition-all hidden md:flex",
+              collapsed && "absolute -right-3 top-8 bg-card border border-border/10 rounded-full shadow-lg"
             )}
           >
             <ChevronLeft className={cn("w-4 h-4 transition-transform", collapsed && "rotate-180")} />
@@ -179,7 +179,7 @@ export function DashboardSidebar() {
           {/* Mobile close button */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/80 transition-all md:hidden"
+            className="p-1.5 rounded-lg hover:bg-accent/10 text-muted-foreground hover:text-foreground transition-all md:hidden"
           >
             <X className="w-5 h-5" />
           </button>
@@ -188,7 +188,7 @@ export function DashboardSidebar() {
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
           {!collapsed && (
-            <p className="px-4 text-[9px] uppercase tracking-[0.25em] font-black text-white/20 mb-3">
+            <p className="px-4 text-[9px] uppercase tracking-[0.25em] font-black text-muted-foreground/30 mb-3">
               Navigation
             </p>
           )}
@@ -218,20 +218,20 @@ export function DashboardSidebar() {
         </nav>
 
         {/* Footer */}
-        <div className={cn("p-3 border-t border-white/[0.04]", collapsed && "px-2")}>
+        <div className={cn("p-3 border-t border-border/10", collapsed && "px-2")}>
           {!collapsed && (
-            <div className="mb-3 mx-1 px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04] flex items-center justify-between">
+            <div className="mb-3 mx-1 px-4 py-2.5 rounded-xl bg-accent/5 border border-border/10 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className={cn(
                   "w-1.5 h-1.5 rounded-full animate-pulse",
-                  dbStatus === "online" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" :
-                  dbStatus === "offline" ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" :
+                  dbStatus === "online" ? "bg-primary shadow-[0_0_8px_rgba(16,185,129,0.5)]" :
+                  dbStatus === "offline" ? "bg-destructive shadow-[0_0_8px_rgba(244,63,94,0.5)]" :
                   "bg-amber-500"
                 )} />
                 <span className={cn(
                   "text-[9px] font-black uppercase tracking-[0.2em]",
-                  dbStatus === "online" ? "text-emerald-500" :
-                  dbStatus === "offline" ? "text-rose-500" :
+                  dbStatus === "online" ? "text-primary" :
+                  dbStatus === "offline" ? "text-destructive" :
                   "text-amber-500"
                 )}>
                   {dbStatus === "online" ? "DB Online" : 
@@ -239,13 +239,13 @@ export function DashboardSidebar() {
                    "Connecting..."}
                 </span>
               </div>
-              <span className="text-[9px] text-white/20 font-mono font-bold">v2.0</span>
+              <span className="text-[9px] text-muted-foreground/40 font-mono font-bold">v3.0</span>
             </div>
           )}
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className={cn(
-              "flex items-center space-x-3 w-full px-4 py-3 rounded-xl text-white/30 hover:bg-rose-500/10 hover:text-rose-500 transition-all duration-200",
+              "flex items-center space-x-3 w-full px-4 py-3 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200",
               collapsed && "justify-center space-x-0"
             )}
           >
@@ -264,7 +264,7 @@ export function DashboardSidebar() {
       )}
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0B0F14]/90 backdrop-blur-2xl border-t border-white/[0.06] pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-2xl border-t border-border/10 pb-safe">
         <div className="flex items-center justify-around px-2 py-2">
           {menuItems.slice(0, 5).map((item) => {
             const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -274,7 +274,7 @@ export function DashboardSidebar() {
                 href={item.href}
                 className={cn(
                   "flex flex-col items-center justify-center w-14 h-12 rounded-xl transition-all duration-200 relative",
-                  isActive ? "text-emerald-500" : "text-white/40 hover:text-white/80"
+                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {isActive && (

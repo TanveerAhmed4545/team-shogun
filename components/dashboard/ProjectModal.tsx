@@ -127,18 +127,18 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <button className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-black shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center space-x-2 w-full sm:w-auto justify-center">
+          <button className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-black shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center space-x-2 w-full sm:w-auto justify-center">
             <Plus className="w-4 h-4" />
             <span>New Project</span>
           </button>
         }
       />
-      <DialogContent className="sm:max-w-[600px] bg-[#0B0F14] border-white/10 text-white backdrop-blur-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] bg-card border-border/10 text-card-foreground backdrop-blur-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black tracking-tight">
             Create New Order
           </DialogTitle>
-          <p className="text-sm text-white/30 font-medium mt-1">
+          <p className="text-sm text-muted-foreground/30 font-medium mt-1">
             Fill in the order details matching your tracking sheet
           </p>
         </DialogHeader>
@@ -146,12 +146,12 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
           {/* Row 1: Order # + Value */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-[9px] uppercase tracking-[0.2em] font-black text-white/20">
+              <Label className="text-[9px] uppercase tracking-[0.2em] font-black text-muted-foreground/20">
                 Order # *
               </Label>
               <Input
                 placeholder="e.g. FO21BAFB08386"
-                className="bg-white/[0.03] border-white/[0.06] focus:border-emerald-500/40 rounded-xl"
+                className="bg-accent/5 border-border/10 focus:border-primary/40 rounded-xl"
                 value={formData.orderId}
                 onChange={(e) =>
                   setFormData({ ...formData, orderId: e.target.value })
@@ -160,14 +160,14 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[9px] uppercase tracking-[0.2em] font-black text-white/20">
+              <Label className="text-[9px] uppercase tracking-[0.2em] font-black text-muted-foreground/20">
                 Value ($) *
               </Label>
               <Input
                 type="number"
                 step="0.01"
                 placeholder="0.00"
-                className="bg-white/[0.03] border-white/[0.06] focus:border-emerald-500/40 rounded-xl"
+                className="bg-accent/5 border-border/10 focus:border-primary/40 rounded-xl"
                 value={formData.value}
                 onChange={(e) =>
                   setFormData({ ...formData, value: e.target.value })
@@ -180,7 +180,7 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
           {/* Row 2: Order Status + Developer Name */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2 flex flex-col">
-              <Label className="text-[9px] uppercase tracking-[0.2em] font-black text-white/20">
+              <Label className="text-[9px] uppercase tracking-[0.2em] font-black text-muted-foreground/20">
                 Order Status
               </Label>
               <Select
@@ -189,10 +189,10 @@ export function ProjectModal({ onSuccess }: { onSuccess?: () => void }) {
                   setFormData({ ...formData, orderStatus: val ?? "Pending" })
                 }
               >
-                <SelectTrigger className="bg-white/[0.03] border-white/[0.06] focus:border-emerald-500/40 rounded-xl">
+                <SelectTrigger className="bg-accent/5 border-border/10 focus:border-primary/40 rounded-xl">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#12181F] border-white/10 text-white">
+                <SelectContent className="bg-card border-border/10 text-card-foreground">
                   <SelectItem value="Pending">Pending</SelectItem>
                   <SelectItem value="WIP">WIP</SelectItem>
                   <SelectItem value="Revision">Revision</SelectItem>

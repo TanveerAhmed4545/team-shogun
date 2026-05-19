@@ -157,7 +157,7 @@ export function EditProjectModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] md:max-w-[900px] lg:max-w-[1000px] bg-[#0B0F14] border-white/10 text-white backdrop-blur-2xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="sm:max-w-[600px] md:max-w-[900px] lg:max-w-[1000px] bg-card border-border/10 text-card-foreground backdrop-blur-2xl max-h-[90vh] overflow-hidden flex flex-col p-0">
         
         {/* Header Section */}
         <div className="p-6 border-b border-white/[0.06] flex items-center justify-between shrink-0 bg-white/[0.01]">
@@ -165,22 +165,22 @@ export function EditProjectModal({
             <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-2">
               {project?.clientName || "Edit Order"}
               {project?.orderStatus && (
-                <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                   {project.orderStatus}
                 </span>
               )}
             </DialogTitle>
-            <p className="text-xs text-white/30 font-bold mt-1 tracking-widest uppercase">
+            <p className="text-xs text-muted-foreground/30 font-bold mt-1 tracking-widest uppercase">
               {project?.orderId || "Updating Project"}
             </p>
           </div>
           
           {/* Custom Tabs */}
-          <div className="flex bg-white/[0.03] p-1 rounded-xl border border-white/[0.06]">
+          <div className="flex bg-accent/5 p-1 rounded-xl border border-border/10">
             <button
               onClick={() => setActiveTab("details")}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeTab === "details" ? "bg-emerald-500/10 text-emerald-500 shadow-sm" : "text-white/40 hover:text-white/80"
+                activeTab === "details" ? "bg-primary/10 text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <FileText className="w-4 h-4" />
@@ -189,7 +189,7 @@ export function EditProjectModal({
             <button
               onClick={() => setActiveTab("chat")}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeTab === "chat" ? "bg-emerald-500/10 text-emerald-500 shadow-sm" : "text-white/40 hover:text-white/80"
+                activeTab === "chat" ? "bg-primary/10 text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <MessageSquare className="w-4 h-4" />
@@ -199,7 +199,7 @@ export function EditProjectModal({
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 bg-[#0B0F14]">
+        <div className="flex-1 overflow-y-auto p-6 bg-card">
           {activeTab === "details" ? (
             <form onSubmit={handleSubmit} className="space-y-6">
           {/* Row 1: Order # + Value */}

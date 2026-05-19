@@ -6,13 +6,16 @@ import QueryProvider from "./providers/QueryProvider";
 import { SocketProvider } from "./providers/SocketProvider";
 import { CommandPalette } from "./dashboard/CommandPalette";
 
+import { ThemeProvider } from "./providers/ThemeProvider";
+
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
-      <QueryProvider>
-        <SocketProvider>
-          {children}
-        </SocketProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <SessionProvider>
+        <QueryProvider>
+          <SocketProvider>
+            {children}
+          </SocketProvider>
         <Toaster
           position="top-right"
           toastOptions={{
@@ -34,6 +37,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         />
         <CommandPalette />
       </QueryProvider>
-    </SessionProvider>
+      </SessionProvider>
+    </ThemeProvider>
   );
 }

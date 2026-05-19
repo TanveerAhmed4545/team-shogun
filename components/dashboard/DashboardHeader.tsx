@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useSidebar } from "./DashboardSidebar";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import Image from "next/image";
 import { useNotifications } from "@/hooks/useNotifications";
 
@@ -58,7 +59,7 @@ export function DashboardHeader() {
   };
 
   return (
-    <header className="h-14 sm:h-16 border-b border-white/[0.04] bg-[#0B0F14]/60 backdrop-blur-2xl sticky top-0 z-40">
+    <header className="h-14 sm:h-16 border-b border-border/10 bg-background/60 backdrop-blur-2xl sticky top-0 z-40">
       <div className="max-w-[1600px] mx-auto w-full h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left side: hamburger + search */}
         <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -67,17 +68,17 @@ export function DashboardHeader() {
             onClick={() => setMobileOpen(true)}
             className="p-2 rounded-xl hover:bg-white/[0.06] transition-colors md:hidden shrink-0"
           >
-            <Menu className="w-5 h-5 text-white/50" />
+            <Menu className="w-5 h-5 text-muted-foreground" />
           </button>
 
           {/* Search bar trigger */}
           <button
             onClick={openCommandPalette}
-            className="group flex-1 max-w-xs sm:max-w-sm md:max-w-md hidden sm:flex items-center gap-3 px-3 sm:px-4 h-9 sm:h-10 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04] hover:border-emerald-500/40 rounded-xl transition-all"
+            className="group flex-1 max-w-xs sm:max-w-sm md:max-w-md hidden sm:flex items-center gap-3 px-3 sm:px-4 h-9 sm:h-10 bg-accent/5 hover:bg-accent/10 border border-border/10 hover:border-primary/40 rounded-xl transition-all"
           >
-            <Search className="w-4 h-4 text-white/20 group-hover:text-emerald-500 transition-colors" />
-            <span className="text-sm text-white/20 group-hover:text-white/40 flex-1 text-left">Search dashboard...</span>
-            <div className="hidden md:flex items-center gap-1 px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-[9px] font-black text-white/30">
+            <Search className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+            <span className="text-sm text-muted-foreground/50 group-hover:text-muted-foreground flex-1 text-left">Search dashboard...</span>
+            <div className="hidden md:flex items-center gap-1 px-1.5 py-0.5 rounded border border-border/20 bg-accent/10 text-[9px] font-black text-muted-foreground/50">
               <span className="text-[10px]">⌘</span>K
             </div>
           </button>
@@ -85,9 +86,9 @@ export function DashboardHeader() {
           {/* Mobile search icon */}
           <button
             onClick={openCommandPalette}
-            className="p-2 rounded-xl hover:bg-white/[0.06] transition-colors sm:hidden shrink-0"
+            className="p-2 rounded-xl hover:bg-accent/10 transition-colors sm:hidden shrink-0"
           >
-            <Search className="w-4 h-4 text-white/40" />
+            <Search className="w-4 h-4 text-muted-foreground/60" />
           </button>
         </div>
 
@@ -101,16 +102,19 @@ export function DashboardHeader() {
             </span>
           </div>
 
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {/* Notifications Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger render={<button className="p-2 rounded-xl hover:bg-white/[0.04] relative border border-white/[0.04] transition-all active:scale-95 group outline-none" />}>
-                <Bell className="w-4 h-4 text-white/30 group-hover:text-white/70 transition-colors" />
+            <DropdownMenuTrigger render={<button className="p-2 rounded-xl hover:bg-accent/10 relative border border-border/10 transition-all active:scale-95 group outline-none" />}>
+                <Bell className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#0B0F14]" />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-background" />
                 )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[280px] sm:w-[320px] md:w-[380px] bg-[#12181F] border border-white/10 p-0 overflow-hidden text-white shadow-2xl">
-              <div className="flex items-center justify-between p-3 sm:p-4 border-b border-white/10">
+            <DropdownMenuContent align="end" className="w-[280px] sm:w-[320px] md:w-[380px] bg-card border border-border/50 p-0 overflow-hidden text-card-foreground shadow-2xl">
+              <div className="flex items-center justify-between p-3 sm:p-4 border-b border-border/10">
                 <span className="font-bold text-sm">Notifications</span>
                 {unreadCount > 0 && (
                   <button 
@@ -163,19 +167,19 @@ export function DashboardHeader() {
                 )}
               </div>
               <Link href="/notifications">
-                <div className="p-3 text-center text-sm font-bold text-white/50 hover:text-white hover:bg-white/[0.02] transition-colors cursor-pointer border-t border-white/10">
+                <div className="p-3 text-center text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors cursor-pointer border-t border-border/10">
                   View All Notifications
                 </div>
               </Link>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="h-5 sm:h-6 w-px bg-white/[0.04] hidden sm:block" />
+          <div className="h-5 sm:h-6 w-px bg-border/20 hidden sm:block" />
 
           {/* Profile Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger render={<button className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group p-1 md:pr-3 rounded-xl hover:bg-white/[0.04] transition-all outline-none" />}>
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0 overflow-hidden relative">
+            <DropdownMenuTrigger render={<button className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group p-1 md:pr-3 rounded-xl hover:bg-accent/10 transition-all outline-none" />}>
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground font-black text-sm shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform shrink-0 overflow-hidden relative">
                   {session?.user?.avatar ? (
                     <Image src={session.user.avatar} alt={session.user.name || "User"} fill className="object-cover" />
                   ) : (
@@ -183,17 +187,17 @@ export function DashboardHeader() {
                   )}
                 </div>
                 <div className="text-left hidden md:block">
-                  <p className="text-sm font-black leading-tight tracking-tight text-white/80">
+                  <p className="text-sm font-black leading-tight tracking-tight text-foreground/80">
                     {session?.user?.name || "Loading..."}
                   </p>
-                  <p className="text-[8px] text-white/20 uppercase tracking-[0.25em] font-black">
+                  <p className="text-[8px] text-muted-foreground uppercase tracking-[0.25em] font-black">
                     {((session?.user as unknown) as { role?: string })?.role || "user"}
                   </p>
                 </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[220px] sm:w-[240px] bg-[#12181F] border border-white/10 p-2 text-white shadow-2xl">
+            <DropdownMenuContent align="end" className="w-[220px] sm:w-[240px] bg-card border border-border/50 p-2 text-card-foreground shadow-2xl">
               <div className="flex items-center gap-3 p-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-black text-lg shadow-lg shrink-0 overflow-hidden relative">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground font-black text-lg shadow-lg shrink-0 overflow-hidden relative">
                   {session?.user?.avatar ? (
                     <Image src={session.user.avatar} alt={session.user.name || "User"} fill className="object-cover" />
                   ) : (
@@ -203,29 +207,29 @@ export function DashboardHeader() {
                 <div className="min-w-0">
                   <p className="font-bold text-sm leading-none truncate">{session?.user?.name}</p>
                   <div className="flex items-center gap-2 mt-1.5">
-                    <Badge variant="outline" className="text-[9px] uppercase tracking-wider text-emerald-400 border-emerald-500/30 px-1.5 py-0 bg-emerald-500/10">
+                    <Badge variant="outline" className="text-[9px] uppercase tracking-wider text-primary border-primary/30 px-1.5 py-0 bg-primary/10">
                       Pro
                     </Badge>
-                    <span className="text-[10px] text-white/40 capitalize">{((session?.user as unknown) as { role?: string })?.role || "user"}</span>
+                    <span className="text-[10px] text-muted-foreground capitalize">{((session?.user as unknown) as { role?: string })?.role || "user"}</span>
                   </div>
                 </div>
               </div>
-              <DropdownMenuSeparator className="bg-white/10 my-1" />
+              <DropdownMenuSeparator className="bg-border/10 my-1" />
               <DropdownMenuGroup>
-                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-lg text-sm text-white/70 focus:bg-white/10 focus:text-white transition-colors" render={<Link href="/profile" />}>
-                    <User className="w-4 h-4 mr-3 text-white/40" />
+                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-lg text-sm text-foreground/70 focus:bg-accent focus:text-accent-foreground transition-colors" render={<Link href="/profile" />}>
+                    <User className="w-4 h-4 mr-3 text-muted-foreground" />
                     Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-lg text-sm text-white/70 focus:bg-white/10 focus:text-white transition-colors" render={<Link href="/notifications" />}>
-                    <Mail className="w-4 h-4 mr-3 text-white/40" />
+                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-lg text-sm text-foreground/70 focus:bg-accent focus:text-accent-foreground transition-colors" render={<Link href="/notifications" />}>
+                    <Mail className="w-4 h-4 mr-3 text-muted-foreground" />
                     Inbox
                 </DropdownMenuItem>
-                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-lg text-sm text-white/70 focus:bg-white/10 focus:text-white transition-colors" render={<Link href="/settings" />}>
-                    <Key className="w-4 h-4 mr-3 text-white/40" />
+                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-lg text-sm text-foreground/70 focus:bg-accent focus:text-accent-foreground transition-colors" render={<Link href="/settings" />}>
+                    <Key className="w-4 h-4 mr-3 text-muted-foreground" />
                     Change Password
                 </DropdownMenuItem>
               </DropdownMenuGroup>
-              <DropdownMenuSeparator className="bg-white/10 my-1" />
+              <DropdownMenuSeparator className="bg-border/10 my-1" />
               <DropdownMenuItem 
                 onClick={() => signOut({ callbackUrl: '/login' })}
                 className="py-2.5 px-3 cursor-pointer hover:bg-rose-500/10 focus:bg-rose-500/10 text-rose-500 rounded-lg text-sm transition-colors"
