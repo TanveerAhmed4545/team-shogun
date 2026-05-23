@@ -62,7 +62,6 @@ export function EditProjectModal({
   // Load project data when modal opens
   useEffect(() => {
     if (project && open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         orderId: project.orderId || "",
         value: String(project.value || ""),

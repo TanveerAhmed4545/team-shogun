@@ -28,30 +28,41 @@ export function DashboardHeader() {
 
   const [hasSynced, setHasSynced] = useState(false);
 
-  // Sync session if avatar is missing or stale [session-sync-effect]
+  // Sync session avatar when missing — also catches deleted user accounts [session-sync-effect]
+  // Only runs once per session when avatar is not yet present in the JWT token.
   useEffect(() => {
-    if (session?.user?.id && !session.user.avatar && !hasSynced) {
-      setHasSynced(true);
-      const syncSession = async () => {
-        try {
-          const res = await fetch(`/api/users/${session.user.id}`);
-          const json = await res.json();
-          if (json.success && json.data.user.avatar) {
-            update({
-              user: {
-                ...session.user,
-                avatar: json.data.user.avatar,
-                name: json.data.user.name,
-              }
-            });
-          }
-        } catch (err) {
-          console.warn("Session sync failed:", err);
+    if (!session?.user?.id || session.user.avatar || hasSynced) return;
+    setHasSynced(true);
+
+    const syncSession = async () => {
+      try {
+        const res = await fetch(`/api/users/${session.user.id}`);
+        
+        // User deleted from DB — clear stale JWT and redirect to login
+        if (res.status === 404) {
+          console.warn("[Auth] Session user no longer exists. Signing out...");
+          await signOut({ callbackUrl: "/login" });
+          return;
         }
-      };
-      syncSession();
-    }
+
+        const json = await res.json();
+        if (json.success && json.data?.user?.avatar) {
+          update({
+            user: {
+              ...session.user,
+              avatar: json.data.user.avatar,
+              name: json.data.user.name,
+            }
+          });
+        }
+      } catch (err) {
+        console.warn("Session sync failed:", err);
+      }
+    };
+
+    syncSession();
   }, [session?.user?.id, session?.user?.avatar, update, hasSynced]);
+
   // Legacy local search states removed in favor of global CommandPalette
 
   const openCommandPalette = () => {
@@ -232,7 +243,7 @@ export function DashboardHeader() {
               <DropdownMenuSeparator className="bg-border/10 my-1" />
               <DropdownMenuItem 
                 onClick={() => signOut({ callbackUrl: '/login' })}
-                className="py-2.5 px-3 cursor-pointer hover:bg-rose-500/10 focus:bg-rose-500/10 text-rose-500 rounded-lg text-sm transition-colors"
+                className="py-2.5 px-3 cursor-pointer focus:!bg-rose-500 focus:!text-white hover:!bg-rose-500 hover:!text-white text-rose-500 rounded-lg text-sm transition-colors"
               >
                 <LogOut className="w-4 h-4 mr-3" />
                 Logout

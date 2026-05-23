@@ -102,7 +102,7 @@ export function ExportButton() {
     const headers = keys.join(",");
     const rows = data.map(obj => 
       keys.map(k => {
-        let val = obj[k];
+        const val = obj[k];
         if (val === null || val === undefined) return '""';
         if (typeof val === 'string') return `"${val.replace(/"/g, '""')}"`;
         return `"${val}"`;

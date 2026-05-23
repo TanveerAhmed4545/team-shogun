@@ -24,7 +24,7 @@ export function ProjectChat({ projectId }: ProjectChatProps) {
   const [attachments, setAttachments] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
-  let typingTimeout: NodeJS.Timeout | null = null;
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch past messages
   const { data: messages = [], isLoading } = useQuery({
@@ -156,8 +156,8 @@ export function ProjectChat({ projectId }: ProjectChatProps) {
     if (socket && isConnected) {
       socket.emit("typing", { projectId, userName: session?.user?.name });
 
-      if (typingTimeout) clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
         socket.emit("stop_typing", { projectId, userName: session?.user?.name });
       }, 2000);
     }
@@ -212,7 +212,7 @@ export function ProjectChat({ projectId }: ProjectChatProps) {
                   <div className={`px-4 py-2.5 rounded-2xl text-sm ${isMe ? "bg-emerald-500 text-white rounded-tr-sm" : "bg-white/[0.04] text-white/90 rounded-tl-sm border border-white/[0.04]"}`}>
                     {msg.attachments && msg.attachments.length > 0 && (
                       <div className="mb-2 max-w-[200px] overflow-hidden rounded-lg cursor-pointer hover:opacity-90 transition-opacity" onClick={() => window.open(msg.attachments[0].url, "_blank")}>
-                        <img src={msg.attachments[0].url} alt="Attachment" className="w-full h-auto object-contain rounded-lg border border-white/10" />
+                        <Image src={msg.attachments[0].url} alt="Attachment" width={200} height={200} className="w-full h-auto object-contain rounded-lg border border-white/10" />
                       </div>
                     )}
                     {msg.content !== "Sent an attachment" && msg.content}

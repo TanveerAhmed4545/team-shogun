@@ -16,7 +16,7 @@ export default withAuth(
 
     // Protect Admin routes
     if (path.startsWith("/admin") && token?.role !== "admin") {
-      res = NextResponse.redirect(new URL("/", req.url));
+      res = NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
     // Inject Security Headers
@@ -40,7 +40,8 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/",
+    "/dashboard",
+    "/dashboard/:path*",
     "/projects/:path*",
     "/leaderboard/:path*",
     "/team/:path*",

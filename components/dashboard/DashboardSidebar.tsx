@@ -20,9 +20,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useState, useEffect, createContext, useContext } from "react";
+import Image from "next/image";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: Briefcase, label: "Projects", href: "/projects" },
   { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
   { icon: Users, label: "Team", href: "/team" },
@@ -74,8 +75,8 @@ function NavItem({
   collapsed: boolean;
 }) {
   const isActive =
-    item.href === "/"
-      ? pathname === "/"
+    item.href === "/dashboard"
+      ? pathname === "/dashboard" || pathname === "/dashboard/"
       : pathname.startsWith(item.href);
 
   return (
@@ -154,15 +155,18 @@ export function DashboardSidebar() {
       >
         {/* Header */}
         <div className={cn("p-6 flex items-center", collapsed ? "justify-center" : "justify-between")}>
-          <Link href="/" className="flex items-center space-x-2.5 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_0_25px_rgba(34,197,94,0.35)] shrink-0">
-              <span className="text-white font-black text-lg italic">S</span>
+          <Link href="/" className="flex items-center justify-center shrink-0 w-full">
+            <div className={cn(
+              "relative rounded-xl overflow-hidden shadow-[0_0_25px_rgba(34,197,94,0.35)] shrink-0 border border-white/5 transition-all duration-300",
+              collapsed ? "w-10 h-10" : "w-[180px] h-24"
+            )}>
+              <Image 
+                src={collapsed ? "/shogun-logo.png" : "/shogun-logo2.png"} 
+                alt="Shogun" 
+                fill 
+                className="object-cover object-center" 
+              />
             </div>
-            {!collapsed && (
-              <h1 className="text-xl font-black tracking-[-0.05em] bg-gradient-to-r from-foreground to-foreground/50 bg-clip-text text-transparent">
-                SHOGUN
-              </h1>
-            )}
           </Link>
 
           {/* Desktop collapse toggle */}
@@ -245,7 +249,7 @@ export function DashboardSidebar() {
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className={cn(
-              "flex items-center space-x-3 w-full px-4 py-3 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200",
+              "flex items-center space-x-3 w-full px-4 py-3 rounded-xl text-muted-foreground hover:bg-rose-500 hover:text-white transition-all duration-200",
               collapsed && "justify-center space-x-0"
             )}
           >
@@ -267,7 +271,7 @@ export function DashboardSidebar() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-2xl border-t border-border/10 pb-safe">
         <div className="flex items-center justify-around px-2 py-2">
           {menuItems.slice(0, 5).map((item) => {
-            const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href);
             return (
               <Link 
                 key={item.label} 

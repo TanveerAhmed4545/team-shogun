@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
 import toast from "react-hot-toast";
+import { useEffect } from "react";
+import { useSocket } from "@/components/providers/SocketProvider";
 
 export interface TeamMember {
   _id: string;
@@ -15,6 +17,23 @@ export interface TeamMember {
 }
 
 export function useUsers() {
+  const queryClient = useQueryClient();
+  const { socket, isConnected } = useSocket();
+
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleTeamUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+    };
+
+    socket.on("team-updated", handleTeamUpdate);
+
+    return () => {
+      socket.off("team-updated", handleTeamUpdate);
+    };
+  }, [socket, isConnected, queryClient]);
+
   return useQuery<TeamMember[]>({
     queryKey: queryKeys.users.list(),
     queryFn: async () => {

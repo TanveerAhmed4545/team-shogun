@@ -21,7 +21,9 @@ export function useRealtimeSync() {
       };
 
       const handleTeamUpdated = () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+        // Invalidate only the users list — NOT the full ['users'] root
+        // (which would cascade into profile queries and cause constant profile reloads)
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
       };
 
       socket.on("project-updated", handleProjectUpdated);
@@ -34,16 +36,15 @@ export function useRealtimeSync() {
     }
 
     // 2. Production Fallback: Background Polling [resilient-fallback]
-    // Since Vercel doesn't support persistent WebSockets, we poll every 10s if socket is offline.
+    // Since Vercel doesn't support persistent WebSockets, we poll every 30s if socket is offline.
+    // We only refresh projects + analytics — NOT users, to avoid cascading into profile queries.
     if (!isConnected) {
-      console.log("Realtime: Socket offline, starting production polling fallback...");
       const pollInterval = setInterval(() => {
         queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
-        // Only invalidate team once in a while to save resources
-        if (Math.random() > 0.7) {
-           queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-        }
-      }, 10000); // 10 second refresh
+        queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all });
+        // Do NOT invalidate queryKeys.users.all here — it cascades into profile
+        // and causes the profile page to reload every poll cycle.
+      }, 30000); // 30 second refresh
 
       return () => clearInterval(pollInterval);
     }

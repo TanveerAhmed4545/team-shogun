@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Clock, Mail, Shield } from "lucide-react";
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 
 export default function PendingPage() {
   return (
@@ -38,8 +39,8 @@ export default function PendingPage() {
 
         {/* Logo */}
         <div className="inline-flex items-center space-x-3 mb-8">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-xl shadow-emerald-500/30">
-            <span className="text-white font-black text-xl italic">S</span>
+          <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-xl shadow-emerald-500/30 bg-black">
+            <Image src="/shogun-logo.png" alt="Shogun" fill className="object-cover" />
           </div>
           <h1 className="text-3xl font-black tracking-tighter text-white">SHOGUN</h1>
         </div>

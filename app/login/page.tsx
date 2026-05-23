@@ -8,7 +8,8 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,107 +34,132 @@ export default function LoginPage() {
       setError(res.error);
       setLoading(false);
     } else {
-      router.push("/");
+      router.push("/dashboard");
     }
   };
 
   return (
-    <div className="min-h-screen mesh-bg flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background glows */}
-      <div className="absolute top-20 left-20 w-[400px] h-[400px] bg-emerald-500/10 blur-[150px] rounded-full" />
-      <div className="absolute bottom-20 right-20 w-[300px] h-[300px] bg-blue-500/8 blur-[120px] rounded-full" />
+    <div className="min-h-screen bg-black flex relative overflow-hidden">
+      {/* Background Cinematic Image */}
+      <Image 
+        src="/samurai-bg.png" 
+        alt="Samurai Background" 
+        fill 
+        className="object-cover object-center opacity-40 scale-105"
+        priority
+      />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.8)_80%)]" />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md"
-      >
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-xl shadow-emerald-500/30">
-              <span className="text-white font-black text-2xl italic">S</span>
-            </div>
-            <h1 className="text-4xl font-black tracking-tighter text-white">SHOGUN</h1>
-          </div>
-          <p className="text-white/40 font-medium">Sign in to your operations center</p>
+      {/* Main Content Area */}
+      <div className="relative z-10 w-full flex flex-col items-center justify-center p-4">
+        
+        {/* Back Link */}
+        <div className="absolute top-8 left-8">
+          <Link href="/" className="group flex items-center gap-2 text-white/50 hover:text-emerald-400 transition-colors text-xs font-bold uppercase tracking-widest">
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Shogun
+          </Link>
         </div>
 
-        {/* Form Card */}
-        <div className="glass-card rounded-3xl p-10 border border-white/5 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 text-rose-400 text-sm font-bold text-center"
-              >
-                {error}
-              </motion.div>
-            )}
-
-            <div className="space-y-2">
-              <Label className="text-[10px] uppercase tracking-[0.2em] font-black text-white/40">Email Address</Label>
-              <Input
-                type="email"
-                placeholder="you@shogun.dev"
-                className="bg-white/5 border-white/5 focus:border-emerald-500/50 rounded-xl h-12 text-white placeholder:text-white/20"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                suppressHydrationWarning
-              />
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-md"
+        >
+          {/* Logo & Title */}
+          <div className="flex flex-col items-center text-center mb-10">
+            <div className="relative w-[280px] h-[160px] border border-white/20 rounded-xl overflow-hidden mb-6 shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+              <Image src="/shogun-logo2.png" alt="Shogun Logo" fill className="object-cover object-center" />
             </div>
+            <h1 className="text-4xl md:text-5xl font-black text-white tracking-wider uppercase" style={{ fontFamily: "var(--font-permanent-marker), cursive", textShadow: "0 0 40px rgba(16,185,129,0.4)" }}>
+              Command Center
+            </h1>
+            <p className="text-emerald-500/80 text-xs tracking-[0.3em] uppercase mt-4 font-bold">
+              Identify Yourself
+            </p>
+          </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] uppercase tracking-[0.2em] font-black text-white/40">Password</Label>
-              <div className="relative">
+          {/* Form Card */}
+          <div className="bg-black/60 backdrop-blur-xl border border-white/10 p-8 shadow-2xl relative overflow-hidden">
+            {/* Top accent line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50" />
+            
+            <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+              {error && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-red-500/10 border border-red-500/50 p-4 text-red-500 text-xs font-bold text-center uppercase tracking-wider">
+                  {error}
+                </motion.div>
+              )}
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Comms Link (Email)</Label>
                 <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="bg-white/5 border-white/5 focus:border-emerald-500/50 rounded-xl h-12 text-white pr-12 placeholder:text-white/20"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  type="email"
+                  placeholder="operative@shogun.dev"
+                  className="bg-white/5 border-white/10 focus-visible:border-emerald-500 focus-visible:ring-0 rounded-none h-12 text-white px-4 font-medium transition-colors"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   suppressHydrationWarning
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black h-12 rounded-xl shadow-xl shadow-emerald-500/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <span className="flex items-center space-x-2">
-                  <span>Enter Command Center</span>
-                  <ArrowRight className="w-4 h-4" />
-                </span>
-              )}
-            </Button>
-          </form>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Passcode</Label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="bg-white/5 border-white/10 focus-visible:border-emerald-500 focus-visible:ring-0 rounded-none h-12 text-white px-4 pr-10 font-medium transition-colors"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    suppressHydrationWarning
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
 
-          <div className="mt-8 pt-6 border-t border-white/5 text-center">
-            <p className="text-white/30 text-sm font-medium">
-              No account yet?{" "}
-              <Link href="/register" className="text-emerald-500 font-black hover:text-emerald-400 transition-colors">
-                Request Access
-              </Link>
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="remember" className="w-3 h-3 rounded-none text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0 border-white/20 bg-white/5" />
+                  <label htmlFor="remember" className="text-[10px] font-bold text-white/60 cursor-pointer uppercase tracking-widest">Remember Me</label>
+                </div>
+                <Link href="#" className="text-[10px] font-bold text-emerald-500 hover:text-emerald-400 transition-colors uppercase tracking-widest">
+                  Override Code?
+                </Link>
+              </div>
+
+              <div className="pt-6">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black h-14 rounded-none transition-all text-sm uppercase tracking-[0.2em]"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "Authenticate"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-white/40 text-xs font-bold uppercase tracking-widest">
+              Unauthorised? <Link href="/register" className="text-emerald-500 hover:text-emerald-400 ml-2 transition-colors">Request Access</Link>
             </p>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }

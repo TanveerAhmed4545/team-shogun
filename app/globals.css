@@ -201,10 +201,301 @@
   }
   body {
     @apply bg-background text-foreground pb-20 md:pb-0;
+    overflow-x: hidden;
   }
   html {
     @apply font-sans antialiased;
+    scroll-behavior: smooth;
   }
+}
+
+/* =======================================================
+   🎬 Cinematic Animation Keyframes
+   ======================================================= */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+
+@keyframes aurora {
+  0%, 100% { opacity: 0.04; transform: scale(1); }
+  50%       { opacity: 0.09; transform: scale(1.08); }
+}
+
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-100%) skewX(-12deg); }
+  100% { transform: translateX(220%) skewX(-12deg); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🌊 Scroll Animation — Text Gradient Shimmer
+   ═══════════════════════════════════════════════════════════ */
+@keyframes text-gradient-flow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gradient-text-animate {
+  background: linear-gradient(
+    135deg,
+    #10b981 0%,
+    #06b6d4 25%,
+    #a78bfa 50%,
+    #10b981 75%,
+    #34d399 100%
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: text-gradient-flow 6s ease infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ✨ Scroll Reveal — Clip Path Wipe In
+   ═══════════════════════════════════════════════════════════ */
+@keyframes clip-reveal-up {
+  from { clip-path: inset(100% 0 0 0); opacity: 0; }
+  to   { clip-path: inset(0% 0 0 0); opacity: 1; }
+}
+
+.animate-clip-reveal {
+  animation: clip-reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   💎 Hero — Particle ambient float (offset timing)
+   ═══════════════════════════════════════════════════════════ */
+@keyframes hero-particle-a {
+  0%, 100% { transform: translate(0px, 0px) scale(1); opacity: 0.06; }
+  33%       { transform: translate(18px, -22px) scale(1.08); opacity: 0.1; }
+  66%       { transform: translate(-12px, 14px) scale(0.94); opacity: 0.05; }
+}
+
+@keyframes hero-particle-b {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg); opacity: 0.04; }
+  50%       { transform: translate(-20px, -15px) rotate(120deg); opacity: 0.08; }
+}
+
+@keyframes hero-particle-c {
+  0%, 100% { transform: translate(0px, 0px) scale(1); opacity: 0.05; }
+  40%       { transform: translate(15px, 25px) scale(1.1); opacity: 0.09; }
+  80%       { transform: translate(-8px, -12px) scale(0.9); opacity: 0.04; }
+}
+
+.animate-particle-a { animation: hero-particle-a 9s ease-in-out infinite; }
+.animate-particle-b { animation: hero-particle-b 7s ease-in-out infinite; }
+.animate-particle-c { animation: hero-particle-c 11s ease-in-out infinite; }
+
+/* ═══════════════════════════════════════════════════════════
+   🔆 Section Glow Pulse (ambient section enter)
+   ═══════════════════════════════════════════════════════════ */
+@keyframes glow-pulse-emerald {
+  0%, 100% { opacity: 0.04; transform: scale(1); }
+  50%       { opacity: 0.09; transform: scale(1.12); }
+}
+
+@keyframes glow-pulse-cyan {
+  0%, 100% { opacity: 0.03; transform: scale(1); }
+  50%       { opacity: 0.07; transform: scale(1.1); }
+}
+
+@keyframes glow-pulse-purple {
+  0%, 100% { opacity: 0.03; transform: scale(1); }
+  50%       { opacity: 0.065; transform: scale(1.08); }
+}
+
+.animate-glow-emerald { animation: glow-pulse-emerald 6s ease-in-out infinite; }
+.animate-glow-cyan    { animation: glow-pulse-cyan 7s ease-in-out infinite; }
+.animate-glow-purple  { animation: glow-pulse-purple 8s ease-in-out infinite; }
+
+/* ═══════════════════════════════════════════════════════════
+   🃏 Card Hover — 3D depth shadow lift
+   ═══════════════════════════════════════════════════════════ */
+.card-3d-hover {
+  transition:
+    transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 300ms ease,
+    border-color 300ms ease;
+  transform-style: preserve-3d;
+  /* will-change promoted only during hover — permanent promotion wastes GPU memory */
+  will-change: auto;
+}
+
+.card-3d-hover:hover {
+  will-change: transform;
+  transform: translateY(-6px) scale(1.008);
+  box-shadow:
+    0 30px 60px -16px rgba(16, 185, 129, 0.12),
+    0 16px 32px -8px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(16, 185, 129, 0.06);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🔲 Bento Grid — Noise texture overlay
+   ═══════════════════════════════════════════════════════════ */
+.bento-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🌈 Scroll Progress Line — Animated hue shift
+   ═══════════════════════════════════════════════════════════ */
+@keyframes hue-rotate-progress {
+  from { filter: hue-rotate(0deg); }
+  to   { filter: hue-rotate(60deg); }
+}
+
+.scroll-progress-line {
+  animation: hue-rotate-progress 8s linear infinite alternate;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🎯 Platform Card — Magnetic hover ring
+   ═══════════════════════════════════════════════════════════ */
+.platform-card-magnetic {
+  transition:
+    transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 250ms ease,
+    border-color 250ms ease;
+  /* Promote layer only on hover, not permanently */
+  will-change: auto;
+}
+
+.platform-card-magnetic:hover {
+  will-change: transform;
+  transform: translateY(-4px) scale(1.03);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🌀 Section Divider — Animated gradient line
+   ═══════════════════════════════════════════════════════════ */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(16, 185, 129, 0.4) 20%,
+    rgba(6, 182, 212, 0.4) 50%,
+    rgba(16, 185, 129, 0.4) 80%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   📐 Perspective container for GSAP rotateX/Y tweens
+   ═══════════════════════════════════════════════════════════ */
+.perspective-container {
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+}
+
+
+/* =======================================================
+   🧰 Animation Utility Classes
+   ======================================================= */
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-aurora {
+  animation: aurora 5s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 12s linear infinite;
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+/* GPU layer promotion */
+.gpu-layer {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Word reveal clip wrapper */
+.clip-overflow {
+  overflow: hidden;
+  display: inline-block;
+}
+
+/* Nav link underline */
+.nav-link-underline {
+  position: relative;
+}
+.nav-link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: #10B981;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms ease;
+}
+.nav-link-underline:hover::after {
+  transform: scaleX(1);
+}
+
+/* Primary button shimmer — only plays on hover, not idle */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255,255,255,0.18) 50%,
+    transparent 60%
+  );
+  /* No animation at rest — starts on hover */
+  animation: none;
+  transform: translateX(-150%) skewX(-12deg);
+}
+.btn-shimmer:hover::after {
+  animation: shimmer-sweep 0.7s ease forwards;
 }
 
 /* =======================================================

@@ -14,6 +14,7 @@ interface LeaderEntry {
   performance_score: number;
   total_earnings: number;
   projects_completed: number;
+  avatar?: string;
 }
 
 export function LeaderboardWidget() {
@@ -31,6 +32,7 @@ export function LeaderboardWidget() {
         .map((m: any) => ({
           _id: m._id,
           name: m.name,
+          avatar: m.avatar,
           performance_score: Math.round(m.efficiencyScore || m.totalActive / 10),
           total_earnings: m.delivered,
           projects_completed: m.completedCount
@@ -81,9 +83,16 @@ export function LeaderboardWidget() {
               key={member._id}
               className="flex items-center space-x-3 p-3 rounded-xl hover:bg-white/[0.03] transition-all group"
             >
-              {/* Rank */}
-              <div className="shrink-0">
-                {index < 3 ? (
+              {/* Rank / Avatar */}
+              <div className="shrink-0 relative">
+                {member.avatar ? (
+                  <div className="w-8 h-8 rounded-lg overflow-hidden shadow-lg border border-white/10">
+                    <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shadow-sm ${index < 3 ? 'bg-gradient-to-br ' + medalColors[index] : 'bg-slate-700'}`}>
+                      {index + 1}
+                    </div>
+                  </div>
+                ) : index < 3 ? (
                   <div
                     className={`w-8 h-8 rounded-lg bg-gradient-to-br ${medalColors[index]} flex items-center justify-center shadow-lg`}
                   >

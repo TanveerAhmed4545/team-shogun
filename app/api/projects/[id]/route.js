@@ -85,6 +85,15 @@ export async function PUT(req, { params }) {
 
     const data = parsed.data;
 
+    // Look up developer ID if name is provided
+    if (data.developer?.name) {
+      const User = (await import("@/models/User")).default;
+      const dev = await User.findOne({ name: data.developer.name });
+      if (dev) {
+        data.developer.id = dev._id;
+      }
+    }
+
     const project = await Project.findByIdAndUpdate(id, data, { new: true, runValidators: true });
 
     if (!project) {
@@ -110,52 +119,74 @@ export async function PUT(req, { params }) {
         projectId: project._id,
         type: "status"
       });
+    }
 
-      try {
-        const Notification = (await import("@/models/Notification")).default;
-        const User = (await import("@/models/User")).default;
+    try {
+      const Notification = (await import("@/models/Notification")).default;
+      const User = (await import("@/models/User")).default;
+      
+      const admins = await User.find({ role: "admin" });
+      const notificationsToCreate = [];
+      
+      // Notify about status change
+      if (data.orderStatus) {
+        admins.forEach(admin => {
+          notificationsToCreate.push({
+            userId: admin._id,
+            title: "Project Status Updated",
+            message: `${session.user.name} changed ${project.orderId} status to ${data.orderStatus}.`,
+            type: "order",
+            link: "/projects"
+          });
+        });
         
-        const admins = await User.find({ role: "admin" });
-        
-        // Create notifications in DB
-        const notificationsToCreate = admins.map(admin => ({
-          userId: admin._id,
-          title: "Project Status Updated",
-          message: `${session.user.name} changed ${project.orderId} status to ${data.orderStatus}.`,
-          type: "order",
-          link: "/projects"
-        }));
-        
-        // Notify the developer if it's not the one making the change
-        if (project.developer?.id && project.developer.id.toString() !== session.user.id) {
+        if (project.developer?.id) {
+          const isSelf = project.developer.id.toString() === session.user.id;
           notificationsToCreate.push({
             userId: project.developer.id,
             title: "Project Status Updated",
-            message: `${session.user.name} changed your project ${project.orderId} status to ${data.orderStatus}.`,
+            message: isSelf 
+              ? `You updated the status of project ${project.orderId} to ${data.orderStatus}.`
+              : `${session.user.name} changed your project ${project.orderId} status to ${data.orderStatus}.`,
             type: "order",
             link: "/projects"
           });
         }
-        
+      }
+
+      // Notify about developer assignment
+      if (data.developer?.name && data.developer.name !== existingProject.developer?.name) {
+        if (project.developer?.id && project.developer.id.toString() !== session.user.id) {
+          notificationsToCreate.push({
+            userId: project.developer.id,
+            title: "Project Assigned",
+            message: `${session.user.name} assigned you to project ${project.orderId}.`,
+            type: "order",
+            link: "/projects"
+          });
+        }
+      }
+      
+      if (notificationsToCreate.length > 0) {
         const createdNotifications = await Notification.insertMany(notificationsToCreate);
         
         // Trigger Socket for developer
-        if (project.developer?.id && project.developer.id.toString() !== session.user.id) {
-          const devNotif = createdNotifications.find(n => n.userId.toString() === project.developer.id.toString());
-          if (devNotif) {
+        if (project.developer?.id) {
+          const devNotifs = createdNotifications.filter(n => n.userId.toString() === project.developer.id.toString());
+          for (const devNotif of devNotifs) {
             await emitSocketEvent(`user-${project.developer.id}`, "notification-received", devNotif);
           }
         }
         
-        // Trigger Socket for admins (one event for all admins)
+        // Trigger Socket for admins (one event for all admins is usually fine, but let's loop to be safe)
         const adminNotif = createdNotifications.find(n => admins.some(a => a._id.toString() === n.userId.toString()));
         if (adminNotif) {
           await emitSocketEvent("admin-channel", "notification-received", adminNotif);
         }
-        
-      } catch (notifErr) {
-        console.error("Failed to create notifications:", notifErr);
       }
+      
+    } catch (notifErr) {
+      console.error("Failed to create notifications:", notifErr);
     }
 
     return NextResponse.json({ project }, { status: 200 });

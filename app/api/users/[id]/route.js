@@ -102,6 +102,33 @@ export async function PUT(req, { params }) {
         userId: session.user.id,
         targetId: id
       });
+
+      // Notify the member of status or role change
+      try {
+        const Notification = (await import("@/models/Notification")).default;
+        
+        if (data.status === "active") {
+          const notif = await Notification.create({
+            userId: id,
+            title: "Account Approved",
+            message: "Your account has been approved by an admin. Welcome to Team Shogun!",
+            type: "system",
+            link: "/dashboard"
+          });
+          await emitSocketEvent(`user-${id}`, "notification-received", notif);
+        } else if (data.role) {
+          const notif = await Notification.create({
+            userId: id,
+            title: "Role Updated",
+            message: `Your role has been updated to ${data.role}.`,
+            type: "system",
+            link: "/profile"
+          });
+          await emitSocketEvent(`user-${id}`, "notification-received", notif);
+        }
+      } catch (notifErr) {
+        console.warn("Failed to notify user:", notifErr);
+      }
     } catch (e) {
       console.warn("RT/Activity failed:", e.message);
     }

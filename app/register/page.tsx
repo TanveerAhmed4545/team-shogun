@@ -7,7 +7,8 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -53,18 +54,20 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen mesh-bg flex items-center justify-center p-4">
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md">
-          <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-8">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
+        <Image src="/samurai-bg.png" alt="Background" fill className="object-cover opacity-20" />
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 text-center max-w-md bg-black/80 p-10 rounded-none border border-emerald-500/30 shadow-[0_0_50px_rgba(16,185,129,0.1)]">
+          <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/50 flex items-center justify-center mx-auto mb-8">
             <CheckCircle2 className="w-10 h-10 text-emerald-500" />
           </div>
-          <h2 className="text-3xl font-black text-white mb-4 tracking-tight">Access Requested</h2>
-          <p className="text-white/50 font-medium leading-relaxed mb-8">
-            Your registration is pending admin approval. You&apos;ll be notified once your account is activated.
+          <h2 className="text-3xl font-black text-white mb-4 tracking-tight uppercase">Access Requested</h2>
+          <p className="text-white/60 font-medium leading-relaxed mb-8">
+            Your registration is pending admin approval. You will be notified once your account is activated.
           </p>
           <Link href="/login">
-            <Button className="bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl px-8 h-12 shadow-xl shadow-emerald-500/10">
-              Back to Login
+            <Button className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-none h-12 transition-all uppercase tracking-widest">
+              Return to Login
             </Button>
           </Link>
         </motion.div>
@@ -73,67 +76,131 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen mesh-bg flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute top-20 right-20 w-[400px] h-[400px] bg-emerald-500/10 blur-[150px] rounded-full" />
-      <div className="absolute bottom-20 left-20 w-[300px] h-[300px] bg-blue-500/8 blur-[120px] rounded-full" />
+    <div className="min-h-screen bg-black flex relative overflow-hidden">
+      {/* Background Cinematic Image */}
+      <Image 
+        src="/samurai-bg.png" 
+        alt="Samurai Background" 
+        fill 
+        className="object-cover object-center opacity-40 scale-105"
+        priority
+      />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.8)_80%)]" />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-xl shadow-emerald-500/30">
-              <span className="text-white font-black text-2xl italic">S</span>
-            </div>
-            <h1 className="text-4xl font-black tracking-tighter text-white">SHOGUN</h1>
-          </div>
-          <p className="text-white/40 font-medium">Request access to the operations center</p>
+      {/* Main Content Area */}
+      <div className="relative z-10 w-full flex flex-col items-center justify-center p-4">
+        
+        {/* Back Link */}
+        <div className="absolute top-8 left-8">
+          <Link href="/" className="group flex items-center gap-2 text-white/50 hover:text-emerald-400 transition-colors text-xs font-bold uppercase tracking-widest">
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Shogun
+          </Link>
         </div>
 
-        <div className="glass-card rounded-3xl p-10 border border-white/5 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 text-rose-400 text-sm font-bold text-center">
-                {error}
-              </motion.div>
-            )}
-
-            <div className="space-y-2">
-              <Label className="text-[10px] uppercase tracking-[0.2em] font-black text-white/40">Full Name</Label>
-              <Input placeholder="Your name" className="bg-white/5 border-white/5 focus:border-emerald-500/50 rounded-xl h-12 text-white placeholder:text-white/20" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-md"
+        >
+          {/* Logo & Title */}
+          <div className="flex flex-col items-center text-center mb-10">
+            <div className="relative w-[280px] h-[160px] border border-white/20 rounded-xl overflow-hidden mb-6 shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+              <Image src="/shogun-logo2.png" alt="Shogun Logo" fill className="object-cover object-center" />
             </div>
-
-            <div className="space-y-2">
-              <Label className="text-[10px] uppercase tracking-[0.2em] font-black text-white/40">Email Address</Label>
-              <Input type="email" placeholder="you@shogun.dev" className="bg-white/5 border-white/5 focus:border-emerald-500/50 rounded-xl h-12 text-white placeholder:text-white/20" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[10px] uppercase tracking-[0.2em] font-black text-white/40">Password</Label>
-              <div className="relative">
-                <Input type={showPassword ? "text" : "password"} placeholder="Min. 6 characters" className="bg-white/5 border-white/5 focus:border-emerald-500/50 rounded-xl h-12 text-white pr-12 placeholder:text-white/20" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors">
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[10px] uppercase tracking-[0.2em] font-black text-white/40">Confirm Password</Label>
-              <Input type="password" placeholder="Repeat password" className="bg-white/5 border-white/5 focus:border-emerald-500/50 rounded-xl h-12 text-white placeholder:text-white/20" value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} required />
-            </div>
-
-            <Button type="submit" disabled={loading} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black h-12 rounded-xl shadow-xl shadow-emerald-500/10 transition-all hover:scale-[1.02] active:scale-[0.98]">
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Request Access"}
-            </Button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-white/5 text-center">
-            <p className="text-white/30 text-sm font-medium">
-              Already have access?{" "}
-              <Link href="/login" className="text-emerald-500 font-black hover:text-emerald-400 transition-colors">Sign In</Link>
+            <h1 className="text-4xl md:text-5xl font-black text-white tracking-wider uppercase" style={{ fontFamily: "var(--font-permanent-marker), cursive", textShadow: "0 0 40px rgba(16,185,129,0.4)" }}>
+              Join the Ranks
+            </h1>
+            <p className="text-emerald-500/80 text-xs tracking-[0.3em] uppercase mt-4 font-bold">
+              Secure Operations Access
             </p>
           </div>
-        </div>
-      </motion.div>
+
+          {/* Form Card */}
+          <div className="bg-black/60 backdrop-blur-xl border border-white/10 p-8 shadow-2xl relative overflow-hidden">
+            {/* Top accent line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50" />
+            
+            <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+              {error && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-red-500/10 border border-red-500/50 p-4 text-red-500 text-xs font-bold text-center uppercase tracking-wider">
+                  {error}
+                </motion.div>
+              )}
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Operative Name</Label>
+                <Input 
+                  placeholder="John Doe" 
+                  className="bg-white/5 border-white/10 focus-visible:border-emerald-500 focus-visible:ring-0 rounded-none h-12 text-white px-4 font-medium transition-colors" 
+                  value={formData.name} 
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
+                  required 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Comms Link (Email)</Label>
+                <Input 
+                  type="email" 
+                  placeholder="agent@shogun.dev" 
+                  className="bg-white/5 border-white/10 focus-visible:border-emerald-500 focus-visible:ring-0 rounded-none h-12 text-white px-4 font-medium transition-colors" 
+                  value={formData.email} 
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
+                  required 
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Passcode</Label>
+                  <div className="relative">
+                    <Input 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder="••••••••" 
+                      className="bg-white/5 border-white/10 focus-visible:border-emerald-500 focus-visible:ring-0 rounded-none h-12 text-white px-4 pr-10 font-medium transition-colors" 
+                      value={formData.password} 
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
+                      required 
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors">
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Verify</Label>
+                  <Input 
+                    type="password" 
+                    placeholder="••••••••" 
+                    className="bg-white/5 border-white/10 focus-visible:border-emerald-500 focus-visible:ring-0 rounded-none h-12 text-white px-4 font-medium transition-colors" 
+                    value={formData.confirmPassword} 
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <Button 
+                  type="submit" 
+                  disabled={loading} 
+                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black h-14 rounded-none transition-all text-sm uppercase tracking-[0.2em]"
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Request Access"}
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-white/40 text-xs font-bold uppercase tracking-widest">
+              Already an operative? <Link href="/login" className="text-emerald-500 hover:text-emerald-400 ml-2 transition-colors">Authenticate</Link>
+            </p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

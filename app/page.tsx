@@ -1,198 +1,52 @@
-"use client";
+import React from "react";
+import LoadingScreen from "@/components/landing/LoadingScreen";
+import ScrollProgress from "@/components/landing/ScrollProgress";
+import GSAPScrollAnimations from "@/components/landing/GSAPScrollAnimations";
+import PageWrapper from "@/components/landing/PageWrapper";
+import HeroSection from "@/components/landing/HeroSection";
+import PlatformSection, { PlatformMarquee } from "@/components/landing/PlatformSection";
+import BentoGridSection from "@/components/landing/BentoGridSection";
+import ProcessSection from "@/components/landing/ProcessSection";
+import ProjectsSection from "@/components/landing/ProjectsSection";
+import ShowcaseSection from "@/components/landing/ShowcaseSection";
+import MetricsSection from "@/components/landing/MetricsSection";
+import InteractiveCTA from "@/components/landing/InteractiveCTA";
+import FooterSection from "@/components/landing/FooterSection";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/queries/keys";
-import { ExportButton } from "@/components/dashboard/ExportButton";
-import dynamic from "next/dynamic";
-import { DashboardSidebar, SidebarProvider } from "@/components/dashboard/DashboardSidebar";
-import { KPICard } from "@/components/dashboard/KPICard";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { ProjectTable } from "@/components/dashboard/ProjectTable";
-import { LeaderboardWidget } from "@/components/dashboard/LeaderboardWidget";
-import {
-  DollarSign,
-  Briefcase,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { ProjectModal } from "@/components/dashboard/ProjectModal";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { useAnalytics } from "@/hooks/useAnalytics";
-
-const RevenueChart = dynamic(
-  () =>
-    import("@/components/dashboard/RevenueChart").then(
-      (mod) => mod.RevenueChart
-    ),
-  { ssr: false }
-);
-const ProjectStatusChart = dynamic(
-  () =>
-    import("@/components/dashboard/ProjectStatusChart").then(
-      (mod) => mod.ProjectStatusChart
-    ),
-  { ssr: false }
-);
-
-const containerVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      staggerChildren: 0.08,
-    },
-  },
+export const metadata = {
+  title: "Team Shogun | Premium Digital Solutions",
+  description: "Six specialisations. One agency. Built to an ultra-premium visual and technical standard.",
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: { opacity: 1, scale: 1 },
-};
-
-export default function Dashboard() {
-  const { data: session } = useSession();
-  const queryClient = useQueryClient();
-
-  // Modularized Hook [hook-abstraction]
-  const { data: statsData, isLoading: loading } = useAnalytics();
-
-  const stats = statsData || {
-    revenue: 0,
-    activeOrders: 0,
-    totalProjects: 0,
-    totalMembers: 0,
-    completionRate: 0,
-    cancelledRate: 0,
-  };
-
-  const handleProjectCreated = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all });
-  };
-
+export default function Home() {
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen mesh-bg text-white selection:bg-emerald-500/30">
-        <DashboardSidebar />
+    <PageWrapper>
+      {/* ─── Cinematic Loader, Scroll Progress & GSAP Controller ─── */}
+      <LoadingScreen />
+      <ScrollProgress />
+      <GSAPScrollAnimations />
 
-        <main className="flex-1 flex flex-col relative overflow-x-hidden min-w-0">
-          {/* Animated background glow */}
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 blur-[120px] rounded-full -z-10 animate-pulse-slow" />
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] rounded-full -z-10" />
+      <div className="min-h-[100dvh] bg-background text-foreground selection:bg-emerald-500/30 overflow-x-hidden relative font-sans">
+        {/* Ambient atmospheric gradients + hero particles */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[800px] pointer-events-none -z-10 overflow-hidden">
+          <div data-gsap="glow-orb" className="animate-aurora animate-glow-emerald absolute top-[-10%] left-1/2 -translate-x-1/2 w-[120%] h-[700px] bg-gradient-to-b from-emerald-500/[0.08] via-cyan-500/[0.03] to-transparent blur-[140px] rounded-full" />
+          <div data-gsap="glow-orb" className="animate-glow-cyan absolute top-[25%] -right-[15%] w-[600px] h-[600px] bg-emerald-500/[0.03] blur-[180px] rounded-full" />
+          <div className="animate-particle-a absolute top-[15%] left-[8%] w-[320px] h-[320px] bg-emerald-500/[0.06] blur-[100px] rounded-full" />
+          <div className="animate-particle-b absolute top-[40%] right-[5%] w-[240px] h-[240px] bg-cyan-500/[0.05] blur-[80px] rounded-full" />
+          <div className="animate-particle-c absolute bottom-[10%] left-[30%] w-[200px] h-[200px] bg-purple-500/[0.04] blur-[90px] rounded-full" />
+        </div>
 
-          <DashboardHeader />
-
-          {/* Dashboard Content */}
-          <motion.div
-            className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 max-w-[1600px] mx-auto w-full"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Welcome Section */}
-            <motion.div
-              className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6"
-              variants={itemVariants}
-            >
-              <div>
-                <Badge className="mb-3 bg-emerald-500/[0.08] text-emerald-400 border-emerald-500/20 font-black tracking-[0.2em] uppercase text-[9px] px-3 py-1">
-                  Command Center
-                </Badge>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-[-0.04em] text-white">
-                  Welcome back, <span className="text-emerald-500">Shogun.</span>
-                </h1>
-                <p className="text-white/30 mt-2 text-sm sm:text-base font-medium">
-                  Real-time performance orchestration for your Fiverr agency
-                </p>
-              </div>
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <ExportButton />
-                <div className="flex-1 sm:flex-none">
-                  <ProjectModal onSuccess={handleProjectCreated} />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* KPI Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-              <motion.div variants={itemVariants}>
-                <KPICard
-                  title="Total Revenue"
-                  value={stats.revenue}
-                  prefix="$"
-                  trend={stats.revenue > 0 ? { value: 12.5, isPositive: true } : undefined}
-                  description="vs last month"
-                  icon={DollarSign}
-                  gradient="primary"
-                  isLive
-                />
-              </motion.div>
-              <motion.div variants={itemVariants}>
-                <KPICard
-                  title="Active Orders"
-                  value={stats.activeOrders}
-                  trend={stats.activeOrders > 0 ? { value: 8, isPositive: true } : undefined}
-                  description="in pipeline"
-                  icon={Briefcase}
-                  gradient="amber"
-                />
-              </motion.div>
-              <motion.div variants={itemVariants}>
-                <KPICard
-                  title="Success Rate"
-                  value={stats.completionRate}
-                  suffix="%"
-                  decimalPlaces={1}
-                  trend={stats.completionRate > 0 ? { value: 2.1, isPositive: true } : undefined}
-                  description="above target"
-                  icon={CheckCircle2}
-                  gradient="primary"
-                  isLive
-                />
-              </motion.div>
-              <motion.div variants={itemVariants}>
-                <KPICard
-                  title="Cancelled"
-                  value={stats.cancelledRate}
-                  suffix="%"
-                  decimalPlaces={1}
-                  trend={stats.cancelledRate > 0 ? { value: 0.5, isPositive: false } : undefined}
-                  description="cancellation rate"
-                  icon={XCircle}
-                  gradient="rose"
-                />
-              </motion.div>
-            </div>
-
-            {/* Main Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-              <motion.div
-                className="lg:col-span-8 space-y-4 sm:space-y-6"
-                variants={itemVariants}
-              >
-                <ProjectTable />
-                <RevenueChart />
-              </motion.div>
-
-              <motion.div
-                className="lg:col-span-4 space-y-4 sm:space-y-6"
-                variants={itemVariants}
-              >
-                <ProjectStatusChart />
-                <LeaderboardWidget />
-                <RecentActivity />
-              </motion.div>
-            </div>
-          </motion.div>
-        </main>
+        <HeroSection />
+        <PlatformMarquee />
+        <BentoGridSection />
+        <ProcessSection />
+        <PlatformSection />
+        <ProjectsSection />
+        <ShowcaseSection />
+        <MetricsSection />
+        <InteractiveCTA />
+        <FooterSection />
       </div>
-    </SidebarProvider>
+    </PageWrapper>
   );
 }

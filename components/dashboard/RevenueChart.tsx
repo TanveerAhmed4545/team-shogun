@@ -21,7 +21,7 @@ export function RevenueChart() {
         <CardContent>
           <div className="h-[350px] w-full flex items-end gap-2 pb-8">
             {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="w-full flex-1 rounded-t-sm" style={{ height: `${Math.max(20, Math.random() * 100)}%` }} />
+              <Skeleton key={i} className="w-full flex-1 rounded-t-sm" style={{ height: `${20 + ((i * 77 + 33) % 65)}%` }} />
             ))}
           </div>
         </CardContent>
@@ -36,28 +36,28 @@ export function RevenueChart() {
       </CardHeader>
       <CardContent>
         <div className="h-[350px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--chart-4)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--chart-4)" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.5} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
               <XAxis 
                 dataKey="month" 
-                stroke="#9CA3AF" 
+                stroke="var(--muted-foreground)" 
                 fontSize={12} 
                 tickLine={false} 
                 axisLine={false} 
               />
               <YAxis 
-                stroke="#9CA3AF" 
+                stroke="var(--muted-foreground)" 
                 fontSize={12} 
                 tickLine={false} 
                 axisLine={false} 
@@ -65,17 +65,17 @@ export function RevenueChart() {
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: "#111827", 
-                  border: "1px solid #374151",
+                  backgroundColor: "var(--card)", 
+                  border: "1px solid var(--border)",
                   borderRadius: "8px",
-                  color: "#fff"
+                  color: "var(--foreground)"
                 }}
-                itemStyle={{ color: "#fff" }}
+                itemStyle={{ color: "var(--foreground)" }}
               />
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#22C55E"
+                stroke="var(--chart-1)"
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorRevenue)"
@@ -83,7 +83,7 @@ export function RevenueChart() {
               <Area
                 type="monotone"
                 dataKey="profit"
-                stroke="#3B82F6"
+                stroke="var(--chart-4)"
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorProfit)"

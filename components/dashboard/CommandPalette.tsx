@@ -117,7 +117,7 @@ export function CommandPalette() {
                   </div>
                 ) : !hasResults && !searching ? (
                   <div className="p-12 flex flex-col items-center justify-center text-center">
-                    <p className="text-muted-foreground/40 font-bold">No results found for "{searchQuery}"</p>
+                    <p className="text-muted-foreground/40 font-bold">No results found for &quot;{searchQuery}&quot;</p>
                   </div>
                 ) : (
                   <div className="space-y-4 p-2">
