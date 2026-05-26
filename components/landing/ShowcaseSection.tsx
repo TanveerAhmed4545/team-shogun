@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
-import Image from "next/image";
-import { motion, useScroll, useTransform } from "framer-motion";
+import React, { useState } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import RevealOnScroll from "@/components/landing/RevealOnScroll";
 import { animationChips } from "@/lib/landing-data";
+import { Zap, MousePointer2, Layers } from "lucide-react";
 
 function Badge({ title }: { title: string }) {
   return (
@@ -14,10 +14,124 @@ function Badge({ title }: { title: string }) {
   );
 }
 
-export default function ShowcaseSection() {
-  const { scrollY } = useScroll();
-  const imageParallaxY = useTransform(scrollY, [200, 1200], [0, 80]);
+// ─── Live Demo Panel ─────────────────────────────────────────────
+function LiveDemoPanel() {
+  const shouldReduceMotion = useReducedMotion();
+  const [hovered, setHovered] = useState(false);
+  const [clicked, setClicked] = useState(false);
 
+  const handleClick = () => {
+    if (shouldReduceMotion) return;
+    setClicked(true);
+    setTimeout(() => setClicked(false), 800);
+  };
+
+  return (
+    <div className="relative w-full aspect-[4/3] rounded-[2.5rem] border border-white/10 bg-[#0a0a0a] overflow-hidden flex flex-col items-center justify-center gap-6 p-8 select-none">
+
+      {/* Animated gradient border glow */}
+      <motion.div
+        animate={{ opacity: hovered ? 1 : 0.4, scale: hovered ? 1.05 : 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="absolute inset-0 rounded-[2.5rem] pointer-events-none"
+        style={{
+          background: "linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(6,182,212,0.08) 50%, rgba(139,92,246,0.1) 100%)",
+        }}
+      />
+
+      {/* Corner accent lines */}
+      <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-emerald-500/40 rounded-tl-xl pointer-events-none" />
+      <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-emerald-500/40 rounded-tr-xl pointer-events-none" />
+      <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-cyan-500/30 rounded-bl-xl pointer-events-none" />
+      <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-cyan-500/30 rounded-br-xl pointer-events-none" />
+
+      {/* Floating orbs */}
+      {!shouldReduceMotion && (
+        <>
+          <motion.div
+            animate={{ y: [0, -14, 0], x: [0, 6, 0] }}
+            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-8 left-10 w-16 h-16 rounded-full bg-emerald-500/10 blur-xl pointer-events-none"
+          />
+          <motion.div
+            animate={{ y: [0, 12, 0], x: [0, -8, 0] }}
+            transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute bottom-10 right-8 w-20 h-20 rounded-full bg-cyan-500/10 blur-xl pointer-events-none"
+          />
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            className="absolute top-1/2 right-6 w-10 h-10 rounded-full bg-purple-500/10 blur-lg pointer-events-none"
+          />
+        </>
+      )}
+
+      {/* Label */}
+      <p className="text-[9px] font-mono text-white/25 uppercase tracking-[0.3em] absolute top-5 left-1/2 -translate-x-1/2 whitespace-nowrap">
+        Live Interactive Demo
+      </p>
+
+      {/* Center: Magnetic button demo */}
+      <div className="flex flex-col items-center gap-4 relative z-10">
+        <motion.button
+          onHoverStart={() => setHovered(true)}
+          onHoverEnd={() => setHovered(false)}
+          onClick={handleClick}
+          whileHover={shouldReduceMotion ? {} : { scale: 1.08 }}
+          whileTap={shouldReduceMotion ? {} : { scale: 0.94 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          className="relative px-8 py-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-black uppercase tracking-widest overflow-hidden cursor-pointer"
+          style={{ WebkitTapHighlightColor: "transparent" }}
+        >
+          {/* Shimmer on hover */}
+          <motion.span
+            animate={hovered ? { x: ["−100%", "200%"] } : { x: "-100%" }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400/20 to-transparent -skew-x-12 pointer-events-none"
+          />
+          <span className="relative flex items-center gap-2">
+            <MousePointer2 className="w-3.5 h-3.5" />
+            Hover Me
+          </span>
+        </motion.button>
+
+        {/* Ripple feedback on click */}
+        <AnimatePresence>
+          {clicked && (
+            <motion.div
+              key="ripple"
+              initial={{ scale: 0.4, opacity: 0.8 }}
+              animate={{ scale: 2.5, opacity: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+              className="absolute w-20 h-20 rounded-full bg-emerald-500/20 pointer-events-none"
+            />
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Bottom row: floating UI chips */}
+      <div className="flex gap-2 relative z-10">
+        {[
+          { icon: Zap, label: "Spring Physics", color: "text-emerald-400", bg: "bg-emerald-500/10" },
+          { icon: Layers, label: "GSAP Scroll", color: "text-cyan-400", bg: "bg-cyan-500/10" },
+        ].map(({ icon: Icon, label, color, bg }) => (
+          <motion.div
+            key={label}
+            animate={shouldReduceMotion ? {} : { y: [0, -4, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: label.length * 0.05 }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${bg} border border-white/[0.05]`}
+          >
+            <Icon className={`w-3 h-3 ${color}`} />
+            <span className={`text-[9px] font-bold uppercase tracking-widest ${color}`}>{label}</span>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function ShowcaseSection() {
   return (
     <section data-gsap="showcase-section" className="py-24 sm:py-32 relative">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -32,22 +146,9 @@ export default function ShowcaseSection() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Live Demo replaces static image */}
           <div data-gsap="showcase-image" className="lg:col-span-6">
-            <motion.div
-              style={{ y: imageParallaxY }}
-              className="relative w-full aspect-[4/3] rounded-[2.5rem] border border-white/10 bg-card/60 shadow-2xl overflow-hidden p-1.5"
-            >
-              <div className="absolute inset-1.5 rounded-[2.3rem] overflow-hidden">
-                <Image
-                  src="/animation_showcase.png"
-                  alt="Interaction & UI Micro-motion Visualization Showcase"
-                  fill
-                  sizes="(max-w-1024px) 100vw, 600px"
-                  loading="lazy"
-                  className="object-cover object-center select-none opacity-80"
-                />
-              </div>
-            </motion.div>
+            <LiveDemoPanel />
           </div>
 
           <div className="lg:col-span-6 flex flex-col space-y-6">

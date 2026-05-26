@@ -12,12 +12,12 @@ function Badge({ title }: { title: string }) {
 
 export function PlatformMarquee() {
   return (
-    <section data-gsap="marquee-section" className="py-16 relative bg-white/[0.015] border-y border-white/[0.06] overflow-hidden select-none">
+    <section data-gsap="marquee-section" className="py-16 relative bg-white/[0.04] backdrop-blur-md border-y border-white/[0.1] overflow-hidden select-none">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 mb-8 flex items-center gap-6">
-        <span className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40 whitespace-nowrap">
+        <span className="text-[11px] font-black uppercase tracking-[0.3em] text-white/80 whitespace-nowrap drop-shadow-md">
           Supported Platforms & Technologies
         </span>
-        <div className="h-px bg-gradient-to-r from-white/10 via-emerald-500/20 to-transparent flex-1" />
+        <div className="h-px bg-gradient-to-r from-white/30 via-emerald-500/40 to-transparent flex-1" />
       </div>
 
       <div
@@ -31,9 +31,9 @@ export function PlatformMarquee() {
           {[...platformBadges, ...platformBadges].map((platform, i) => (
             <div
               key={i}
-              className="flex items-center gap-3 px-8 text-[13px] font-black uppercase tracking-[0.18em] text-white/50 hover:text-emerald-400 transition-colors duration-300 cursor-default"
+              className="flex items-center gap-3 px-8 text-[13px] font-black uppercase tracking-[0.18em] text-white hover:text-emerald-400 transition-colors duration-300 cursor-default drop-shadow-lg"
             >
-              <Sparkles className="w-4 h-4 text-emerald-500/60 flex-shrink-0" />
+              <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
               <span>{platform}</span>
             </div>
           ))}
@@ -73,6 +73,18 @@ export default function PlatformSection() {
                 <p className="text-white/40 text-[10px] sm:text-xs leading-relaxed mt-2.5 font-medium">
                   {platform.desc}
                 </p>
+
+                {/* Expertise badge — slides up on hover */}
+                <div className="overflow-hidden mt-3">
+                  <div className="translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out flex items-center justify-between">
+                    <span className={`text-[9px] font-black uppercase tracking-widest ${platform.color}`}>
+                      {platform.expertise}
+                    </span>
+                    <span className="text-[9px] font-mono text-white/30 font-bold">
+                      {platform.projectCount} projects
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           ))}

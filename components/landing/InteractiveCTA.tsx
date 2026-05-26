@@ -23,15 +23,7 @@ export default function InteractiveCTA() {
         </p>
 
         <div data-gsap="cta-buttons" className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 pt-4">
-            <MagneticButton strength={0.35}>
-              <a
-                href="mailto:contact@teamshogun.com"
-                suppressHydrationWarning
-                className="btn-shimmer bg-emerald-500 hover:bg-emerald-400 text-black px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-colors duration-200 inline-flex items-center justify-center gap-2"
-              >
-                Start Your Project <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
-              </a>
-            </MagneticButton>
+
             <MagneticButton strength={0.25}>
               <a
                 href="https://calendly.com"

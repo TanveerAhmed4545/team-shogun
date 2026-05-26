@@ -7,7 +7,7 @@ import {
   useMotionValue,
   useTransform,
 } from "framer-motion";
-import { Database, ChevronRight } from "lucide-react";
+import { Database } from "lucide-react";
 import Image from "next/image";
 import RevealOnScroll from "@/components/landing/RevealOnScroll";
 import { bentoServices } from "@/lib/landing-data";
@@ -89,8 +89,15 @@ function ServiceCard({ service }: ServiceCardProps) {
           {service.description}
         </p>
 
-        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-white/30 mt-8 group-hover:text-emerald-400 transition-colors duration-200 relative z-10">
-          Platforms Standard Guarantee <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />
+        <div className="flex flex-wrap items-center gap-1.5 mt-8 relative z-10">
+          {service.tags?.map((tag) => (
+            <span
+              key={tag}
+              className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest bg-white/[0.04] border border-white/[0.07] text-white/30 group-hover:border-emerald-500/20 group-hover:text-emerald-400/70 transition-colors duration-300"
+            >
+              {tag}
+            </span>
+          ))}
         </div>
       </div>
     </RevealOnScroll>

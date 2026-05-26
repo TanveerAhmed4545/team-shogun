@@ -36,6 +36,7 @@ export const bentoServices = [
     accent: "from-emerald-500/20 to-transparent",
     border: "group-hover:border-emerald-500/30",
     glow: "bg-emerald-500/10",
+    tags: ["Squarespace", "CSS/JS", "Fluid Engine"],
   },
   {
     icon: ShoppingCart,
@@ -45,6 +46,7 @@ export const bentoServices = [
     border: "group-hover:border-cyan-500/30",
     glow: "bg-cyan-500/10",
     image: "/bento_ui_4k.png",
+    tags: ["Shopify", "Liquid", "Dawn Theme"],
   },
   {
     icon: Globe,
@@ -53,6 +55,7 @@ export const bentoServices = [
     accent: "from-purple-500/20 to-transparent",
     border: "group-hover:border-purple-500/30",
     glow: "bg-purple-500/10",
+    tags: ["Wix", "Velo", "JavaScript"],
   },
   {
     icon: Code2,
@@ -62,6 +65,7 @@ export const bentoServices = [
     border: "group-hover:border-emerald-500/30",
     glow: "bg-emerald-500/10",
     image: "/bento_tech_4k.png",
+    tags: ["React", "Next.js", "Framer Motion"],
   },
   {
     icon: Server,
@@ -70,6 +74,7 @@ export const bentoServices = [
     accent: "from-cyan-500/20 to-transparent",
     border: "group-hover:border-cyan-500/30",
     glow: "bg-cyan-500/10",
+    tags: ["Node.js", "NestJS", "REST API"],
   },
 ];
 
@@ -97,13 +102,13 @@ export const processSteps = [
 ];
 
 export const platformExpertise = [
-  { name: "Squarespace", desc: "Elegant business websites & landing pages", color: "text-emerald-400", bg: "bg-emerald-500/5", border: "hover:border-emerald-500/25", icon: LayoutGrid },
-  { name: "Shopify", desc: "Premium eCommerce stores & product sites", color: "text-cyan-400", bg: "bg-cyan-500/5", border: "hover:border-cyan-500/25", icon: ShoppingCart },
-  { name: "Wix Velo", desc: "Flexible websites with custom database flow", color: "text-purple-400", bg: "bg-purple-500/5", border: "hover:border-purple-500/25", icon: Globe },
-  { name: "React", desc: "Interactive frontend experiences & dashboards", color: "text-blue-400", bg: "bg-blue-500/5", border: "hover:border-blue-500/25", icon: Code2 },
-  { name: "Node.js", desc: "Backend logic, custom APIs & microservices", color: "text-emerald-400", bg: "bg-emerald-500/5", border: "hover:border-emerald-500/25", icon: Server },
-  { name: "NestJS", desc: "Scalable backend architecture for enterprise", color: "text-rose-400", bg: "bg-rose-500/5", border: "hover:border-rose-500/25", icon: Zap },
-  { name: "MongoDB", desc: "Dynamic data, custom dashboards & cloud storage", color: "text-amber-400", bg: "bg-amber-500/5", border: "hover:border-amber-500/25", icon: Database },
+  { name: "Squarespace", desc: "Elegant business websites & landing pages", color: "text-emerald-400", bg: "bg-emerald-500/5", border: "hover:border-emerald-500/25", icon: LayoutGrid, projectCount: "150+", expertise: "Expert" },
+  { name: "Shopify", desc: "Premium eCommerce stores & product sites", color: "text-cyan-400", bg: "bg-cyan-500/5", border: "hover:border-cyan-500/25", icon: ShoppingCart, projectCount: "120+", expertise: "Expert" },
+  { name: "Wix Velo", desc: "Flexible websites with custom database flow", color: "text-purple-400", bg: "bg-purple-500/5", border: "hover:border-purple-500/25", icon: Globe, projectCount: "80+", expertise: "Advanced" },
+  { name: "React", desc: "Interactive frontend experiences & dashboards", color: "text-blue-400", bg: "bg-blue-500/5", border: "hover:border-blue-500/25", icon: Code2, projectCount: "70+", expertise: "Expert" },
+  { name: "Node.js", desc: "Backend logic, custom APIs & microservices", color: "text-emerald-400", bg: "bg-emerald-500/5", border: "hover:border-emerald-500/25", icon: Server, projectCount: "60+", expertise: "Advanced" },
+  { name: "NestJS", desc: "Scalable backend architecture for enterprise", color: "text-rose-400", bg: "bg-rose-500/5", border: "hover:border-rose-500/25", icon: Zap, projectCount: "30+", expertise: "Proficient" },
+  { name: "MongoDB", desc: "Dynamic data, custom dashboards & cloud storage", color: "text-amber-400", bg: "bg-amber-500/5", border: "hover:border-amber-500/25", icon: Database, projectCount: "90+", expertise: "Expert" },
 ];
 
 export const featuredProjects = [

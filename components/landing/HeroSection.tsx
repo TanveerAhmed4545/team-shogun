@@ -180,6 +180,12 @@ export default function HeroSection() {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-6 lg:space-x-10 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/50">
+            <Link
+              href="/home2"
+              className="nav-link-underline text-emerald-400 hover:text-emerald-300 transition-colors duration-200"
+            >
+              [3D Version]
+            </Link>
             {["Services", "Process", "Work", "Platforms", "Contact"].map((item) => (
               <Link
                 key={item}
@@ -213,14 +219,7 @@ export default function HeroSection() {
                 >
                   Login
                 </Link>
-                <MagneticButton strength={0.25}>
-                  <Link
-                    href="#contact"
-                    className="btn-shimmer bg-foreground/5 hover:bg-foreground/10 text-foreground border border-foreground/10 px-3 py-2 md:px-5 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-xs font-black uppercase tracking-wider transition-colors duration-200 inline-flex items-center gap-1 md:gap-1.5 whitespace-nowrap"
-                  >
-                    Start Project <ChevronRight className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                  </Link>
-                </MagneticButton>
+
               </>
             )}
           </div>
@@ -275,6 +274,39 @@ export default function HeroSection() {
           >
             SHOGUN
           </motion.h1>
+
+          {/* Sub-headline */}
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 1.0 }}
+            className="mt-6 text-white/60 text-sm md:text-base font-medium tracking-wide max-w-[46ch] text-center leading-relaxed"
+          >
+            Premium digital products — Shopify, Squarespace, React &amp; more.
+          </motion.p>
+
+          {/* Social Proof Strip */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.2 }}
+            className="mt-6 flex flex-wrap items-center justify-center gap-4 md:gap-6"
+          >
+            {[
+              { value: "547+", label: "Projects Delivered" },
+              { value: "5.0★", label: "Fiverr Rating" },
+              { value: "6", label: "Specialisations" },
+            ].map((stat) => (
+              <div key={stat.label} className="flex items-center gap-2">
+                <span className="text-emerald-400 font-black text-sm md:text-base tabular-nums">
+                  {stat.value}
+                </span>
+                <span className="text-white/40 text-[10px] md:text-xs font-bold uppercase tracking-widest">
+                  {stat.label}
+                </span>
+              </div>
+            ))}
+          </motion.div>
         </div>
 
         <motion.a
