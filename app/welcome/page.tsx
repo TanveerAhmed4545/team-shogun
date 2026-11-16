@@ -13,7 +13,7 @@ export default function WelcomePage() {
         title="Welcome to Team Shogun"
         subtitle="Real‑time command center for your Fiverr agency. Track, manage, and scale with confidence."
         primaryCta={{ label: "Get Started", href: "/login" }}
-        secondaryCta={{ label: "Learn More", href: "/about" }}
+        secondaryCta={{ label: "Learn More", href: "/#process" }}
       />
       <section className="max-w-6xl mx-auto px-4 py-12 grid gap-8 md:grid-cols-3">
         <FeatureCard

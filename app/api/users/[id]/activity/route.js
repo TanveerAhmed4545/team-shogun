@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Activity from "@/models/Activity";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(req, { params }) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.status !== "active") {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     if (!id) return NextResponse.json({ success: false, message: "User ID required" }, { status: 400 });
 

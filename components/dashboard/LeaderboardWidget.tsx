@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, TrendingUp, Medal } from "lucide-react";
 
@@ -86,8 +87,8 @@ export function LeaderboardWidget() {
               {/* Rank / Avatar */}
               <div className="shrink-0 relative">
                 {member.avatar ? (
-                  <div className="w-8 h-8 rounded-lg overflow-hidden shadow-lg border border-white/10">
-                    <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                  <div className="relative w-8 h-8 rounded-lg overflow-hidden shadow-lg border border-white/10">
+                    <Image src={member.avatar} alt={member.name} fill className="object-cover" />
                     <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shadow-sm ${index < 3 ? 'bg-gradient-to-br ' + medalColors[index] : 'bg-slate-700'}`}>
                       {index + 1}
                     </div>

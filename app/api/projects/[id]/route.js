@@ -6,6 +6,7 @@ import Project from "@/models/Project";
 import Activity from "@/models/Activity";
 import { emitSocketEvent } from "@/lib/socket-emitter";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
+import mongoose from "mongoose";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -32,6 +33,11 @@ export async function GET(req, { params }) {
 
     await dbConnect();
     const { id } = await params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ message: "Invalid project ID format" }, { status: 400 });
+    }
+
     const project = await Project.findById(id).populate("developer.id", "name avatar");
 
     if (!project) {
@@ -53,6 +59,10 @@ export async function PUT(req, { params }) {
 
     await dbConnect();
     const { id } = await params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ message: "Invalid project ID format" }, { status: 400 });
+    }
     
     // First, fetch the project to check ownership
     const existingProject = await Project.findById(id);
@@ -207,6 +217,11 @@ export async function DELETE(req, { params }) {
     
     // Fetch project to check ownership
     const { id } = await params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ message: "Invalid project ID format" }, { status: 400 });
+    }
+
     const projectToDelete = await Project.findById(id);
 
     if (!projectToDelete) {

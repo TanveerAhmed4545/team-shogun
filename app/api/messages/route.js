@@ -78,7 +78,7 @@ export async function POST(req) {
           title: "New Message",
           message: `${session.user.name} sent a message in project ${project.orderId}`,
           type: "system",
-          link: `/projects/${projectId}`
+          link: "/projects"
         });
         await emitSocketEvent(`user-${project.developer.id}`, "notification-received", notif);
       } else if (session.user.role !== "admin") {
@@ -90,7 +90,7 @@ export async function POST(req) {
             title: "New Message",
             message: `${session.user.name} sent a message in project ${project.orderId}`,
             type: "system",
-            link: `/projects/${projectId}`
+            link: "/projects"
           })
         ));
         for (const notif of adminNotifs) {

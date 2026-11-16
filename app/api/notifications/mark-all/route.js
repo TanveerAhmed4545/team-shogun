@@ -14,7 +14,7 @@ export async function PUT(req) {
     await dbConnect();
     
     await Notification.updateMany(
-      {},
+      { userId: session.user.id, read: false },
       { $set: { read: true } }
     );
 

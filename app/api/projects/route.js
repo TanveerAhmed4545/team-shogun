@@ -20,15 +20,26 @@ const projectSchema = z.object({
 
 import { checkRateLimit } from "@/lib/utils/rate-limit";
 
+import mongoose from "mongoose";
+
 export async function GET(req) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.status !== "active") {
+      return ApiResponse.unauthorized("Authentication required");
+    }
+
     const { searchParams } = new URL(req.url);
     const developerId = searchParams.get("developer");
     let filter = {};
     
     if (developerId) {
-      const user = await User.findById(developerId);
-      filter = user ? { $or: [{ "developer.id": developerId }, { "developer.name": user.name }] } : { "developer.id": developerId };
+      if (mongoose.Types.ObjectId.isValid(developerId)) {
+        const user = await User.findById(developerId);
+        filter = user ? { $or: [{ "developer.id": developerId }, { "developer.name": user.name }] } : { "developer.id": developerId };
+      } else {
+        filter = { "developer.name": developerId };
+      }
     }
     
     const projects = await projectService.getAllProjects(filter);

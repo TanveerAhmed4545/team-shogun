@@ -1,3 +1,4 @@
+require('dotenv').config({ path: '.env.local' });
 const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
@@ -65,6 +66,14 @@ io.on('connection', (socket) => {
 
 // REST endpoint for Next.js API to trigger socket events
 app.post('/emit', (req, res) => {
+  const secret = process.env.NEXTAUTH_SECRET || process.env.CRON_SECRET;
+  if (secret) {
+    const authHeader = req.headers.authorization;
+    if (authHeader !== `Bearer ${secret}`) {
+      return res.status(401).json({ error: 'Unauthorized emit attempt' });
+    }
+  }
+
   const { channel, event, data } = req.body;
   
   if (!channel || !event) {

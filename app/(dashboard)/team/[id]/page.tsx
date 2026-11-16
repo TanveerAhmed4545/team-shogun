@@ -1,308 +1,395 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { useTeamPerformance } from "@/hooks/useTeamPerformance";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Crown, Star, Target, DollarSign, Package, CheckCircle2, RefreshCw } from "lucide-react";
-import { motion } from "framer-motion";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import React, { use, useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  Briefcase,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  Mail,
+  MapPin,
+  Phone,
+  Shield,
+  Star,
+  TrendingUp,
+  User as UserIcon,
+  Award,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
+import { queryKeys } from "@/lib/queries/keys";
+import { getTimeLeft } from "@/lib/utils/project";
+import toast from "react-hot-toast";
 
-export default function MemberProfilePage() {
-  const { id } = useParams();
-  const { data, isLoading, refetch } = useTeamPerformance();
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(false);
+const statusStyles: Record<string, string> = {
+  Pending: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  WIP: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  Revision: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+  Delivered: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+  Completed: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+  Cancelled: "bg-slate-500/10 text-slate-500 border-slate-500/20",
+};
 
-  const member = data?.find((m: any) => String(m._id) === String(id));
+export default function MemberProfilePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const resolvedParams = use(params);
+  const { id } = resolvedParams;
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const isAdmin = session?.user?.role === "admin";
 
-  useEffect(() => {
-    if (!id) return;
-    
-    const fetchProjects = async () => {
-      setLoadingProjects(true);
-      try {
-        const res = await fetch(`/api/projects?developer=${id}`);
-        const json = await res.json();
-        if (json.success) {
-          setProjects(json.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch projects", error);
-      } finally {
-        setLoadingProjects(false);
-      }
-    };
+  // Fetch Member Details
+  const {
+    data: member,
+    isLoading: loadingMember,
+    isError,
+  } = useQuery({
+    queryKey: queryKeys.users.detail(id),
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${id}`);
+      if (!res.ok) throw new Error("Member not found");
+      const json = await res.json();
+      return json.data.user;
+    },
+    enabled: !!id,
+  });
 
-    fetchProjects();
-  }, [id]);
+  // Fetch Member's Projects
+  const { data: projects = [], isLoading: loadingProjects } = useQuery({
+    queryKey: ["projects", "developer", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects?developer=${id}`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.data || [];
+    },
+    enabled: !!id,
+  });
 
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
+  // Admin Role/Status Update Mutation
+  const updateMutation = useMutation({
+    mutationFn: async (updatedData: { role?: string; status?: string }) => {
+      const res = await fetch(`/api/users/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedData),
+      });
+      if (!res.ok) throw new Error("Failed to update member");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Member updated successfully");
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+    },
+    onError: () => {
+      toast.error("Failed to update member settings");
+    },
+  });
 
-  if (isLoading || !data || data.length === 0) {
+  if (loadingMember) {
     return (
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-        <div className="max-w-[1600px] mx-auto space-y-6">
-              <Skeleton className="h-32 w-full rounded-2xl bg-white/[0.02]" />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Skeleton className="h-24 w-full rounded-2xl bg-white/[0.02]" />
-                <Skeleton className="h-24 w-full rounded-2xl bg-white/[0.02]" />
-                <Skeleton className="h-24 w-full rounded-2xl bg-white/[0.02]" />
-              </div>
-              <Skeleton className="h-64 w-full rounded-2xl bg-white/[0.02]" />
-            </div>
+      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-emerald-500 border-t-transparent" />
+          <p className="text-white/40 font-bold text-xs uppercase tracking-widest">
+            Loading operative record...
+          </p>
+        </div>
       </div>
     );
   }
 
-  if (!member) {
+  if (isError || !member) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div className="text-center">
-              <p className="text-white/40 text-lg font-bold">Member not found</p>
-              <Link href="/team" className="text-emerald-500 hover:text-emerald-400 text-sm mt-2 inline-block font-bold">
-                Back to Team
-              </Link>
-            </div>
+      <div className="flex-1 flex items-center justify-center min-h-[60vh] p-4">
+        <div className="text-center max-w-md p-8 bg-card/60 border border-border/10 rounded-2xl">
+          <h2 className="text-xl font-black text-foreground mb-2">Member Not Found</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            The requested operative profile could not be retrieved or has been removed.
+          </p>
+          <Link href="/team">
+            <Button variant="outline" className="gap-2">
+              <ArrowLeft className="w-4 h-4" /> Return to Roster
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
-
-  // Mock data for chart (scaled to real delivered value)
-  const chartData = [
-    { month: "Jan", earnings: Math.round((member.delivered || 0) * 0.5) },
-    { month: "Feb", earnings: Math.round((member.delivered || 0) * 0.7) },
-    { month: "Mar", earnings: Math.round((member.delivered || 0) * 0.6) },
-    { month: "Apr", earnings: Math.round((member.delivered || 0) * 0.9) },
-    { month: "May", earnings: Math.round(member.delivered || 0) },
-  ];
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-      <div className="max-w-[1600px] mx-auto space-y-6">
-            
-            {/* Header / Profile Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card rounded-2xl border border-border bg-card p-6 flex flex-col md:flex-row items-center gap-6"
+    <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto w-full space-y-8 animate-in fade-in duration-500">
+      {/* Top Navigation */}
+      <div className="flex items-center justify-between">
+        <Link
+          href="/team"
+          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Team Roster
+        </Link>
+        {isAdmin && (
+          <div className="flex items-center gap-3">
+            <Select
+              value={member.role}
+              onValueChange={(newRole) => updateMutation.mutate({ role: newRole })}
             >
-              <div className="relative">
-                <Avatar className="w-24 h-24 rounded-2xl border-2 border-white/[0.06] group-hover:border-emerald-500/30 transition-colors">
-                  <AvatarImage src={member.avatar} />
-                  <AvatarFallback className="bg-gradient-to-br from-emerald-500/20 to-blue-500/20 text-3xl font-black">
-                    {member.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                {member.stars > 0 && (
-                  <div className="absolute -top-2 -right-2 bg-amber-500 rounded-lg p-1.5 shadow-lg">
-                    <Crown className="w-4 h-4 text-[#0B0F14] fill-current" />
-                  </div>
-                )}
-              </div>
-              
-              <div className="text-center md:text-left flex-1">
-                <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-                  <h1 className="text-3xl font-black text-white tracking-tight">{member.name}</h1>
-                  <div className="flex items-center gap-2 justify-center md:justify-start">
-                    <Badge className="bg-white/[0.04] text-white/60 border-white/[0.05] capitalize">
-                      {member.role}
-                    </Badge>
-                    {member.stars > 0 && (
-                      <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 flex items-center gap-1">
-                        <Star className="w-3 h-3 fill-current" /> {member.stars} Stars
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <p className="text-white/40 text-sm mt-1 font-medium">{member.email}</p>
-                
-                <div className="flex flex-wrap gap-1.5 mt-3 justify-center md:justify-start">
-                  {member.skills?.map((skill: string) => (
-                    <span key={skill} className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/[0.03] text-white/40 border border-white/[0.05]">
-                      {skill}
-                    </span>
-                  )) || (
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/[0.03] text-white/20 border border-white/[0.05]">
-                      No skills listed
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => refetch()}
-                  className="p-2.5 rounded-xl border border-white/[0.04] hover:bg-white/[0.02] transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4 text-white/40" />
-                </button>
-              </div>
-            </motion.div>
+              <SelectTrigger className="h-8 text-xs bg-accent/5 border-border/10 w-32">
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="moderator">Moderator</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              <Card className="bg-card border-border p-5 shadow-sm">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Total Delivered</p>
-                    <p className="text-2xl font-black text-foreground mt-1">${(member.delivered || 0).toLocaleString()}</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5" />
-                  </div>
-                </div>
-              </Card>
-              
-              <Card className="bg-card border-border p-5 shadow-sm">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Work In Progress</p>
-                    <p className="text-2xl font-black text-foreground mt-1">${(member.wip || 0).toLocaleString()}</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                    <Package className="w-5 h-5" />
-                  </div>
-                </div>
-              </Card>
-              
-              <Card className="bg-card border-border p-5 shadow-sm">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Projects Completed</p>
-                    <p className="text-2xl font-black text-foreground mt-1">{member.completedCount}</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5" />
-                  </div>
-                </div>
-              </Card>
-              
-              <Card className="bg-card border-border p-5 shadow-sm">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Monthly Target</p>
-                    <p className="text-2xl font-black text-foreground mt-1">${(member.preferences?.monthlyTarget || 1100).toLocaleString()}</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                    <Target className="w-5 h-5" />
-                  </div>
-                </div>
-              </Card>
+            <Select
+              value={member.status}
+              onValueChange={(newStatus) => updateMutation.mutate({ status: newStatus })}
+            >
+              <SelectTrigger className="h-8 text-xs bg-accent/5 border-border/10 w-32">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="suspended">Suspended</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+
+      {/* Profile Header Banner */}
+      <div className="relative rounded-3xl overflow-hidden border border-white/[0.06] bg-gradient-to-b from-white/[0.04] to-transparent p-6 sm:p-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-emerald-500/30 bg-black/40 shrink-0">
+            {member.avatar ? (
+              <Image
+                src={member.avatar}
+                alt={member.name}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-white/30 text-3xl font-black">
+                {member.name?.slice(0, 2).toUpperCase() || "OP"}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                {member.name}
+              </h1>
+              <Badge
+                variant="outline"
+                className={`text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full ${
+                  member.role === "admin"
+                    ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                    : member.role === "moderator"
+                    ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                }`}
+              >
+                {member.role}
+              </Badge>
+              <Badge
+                variant="outline"
+                className={`text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full ${
+                  member.status === "active"
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                    : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                }`}
+              >
+                {member.status}
+              </Badge>
             </div>
 
-            {/* Charts & Details */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Chart */}
-              <Card className="lg:col-span-2 bg-card border-border p-6 shadow-sm">
-                <CardHeader className="px-0 pt-0">
-                  <CardTitle className="text-sm font-black uppercase tracking-wider text-foreground/70">Earnings Performance</CardTitle>
-                </CardHeader>
-                <div className="h-[250px] mt-4 text-foreground">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                      <XAxis dataKey="month" stroke="hsl(var(--border))" tick={{ fill: 'hsl(var(--foreground))', opacity: 0.5, fontSize: 10 }} />
-                      <YAxis stroke="hsl(var(--border))" tick={{ fill: 'hsl(var(--foreground))', opacity: 0.5, fontSize: 10 }} tickFormatter={(val) => `$${val}`} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
-                        labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 'bold' }}
-                        itemStyle={{ color: 'hsl(var(--foreground))' }}
-                      />
-                      <Area type="monotone" dataKey="earnings" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorEarnings)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-              
-              {/* Additional Info */}
-              <Card className="bg-card border-border shadow-sm p-6">
-                <CardHeader className="px-0 pt-0">
-                  <CardTitle className="text-sm font-black uppercase tracking-wider text-foreground/70">Member Status</CardTitle>
-                </CardHeader>
-                <div className="space-y-4 mt-4">
-                  <div className="flex justify-between items-center py-2 border-b border-border/50">
-                    <span className="text-xs text-muted-foreground">Account Score</span>
-                    <span className="text-sm font-bold text-foreground">{member.score || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-border/50">
-                    <span className="text-xs text-muted-foreground">Role</span>
-                    <span className="text-sm font-bold text-foreground capitalize">{member.role}</span>
-                  </div>
+            {member.bio && (
+              <p className="text-white/60 text-sm mt-2 max-w-2xl leading-relaxed">
+                {member.bio}
+              </p>
+            )}
 
-                </div>
-              </Card>
-            </div>
-
-            {/* Projects Section */}
-            <Card className="bg-card border-border p-6 shadow-sm">
-              <CardHeader className="px-0 pt-0 flex flex-row justify-between items-center">
-                <CardTitle className="text-sm font-black uppercase tracking-wider text-foreground/70">Assigned Projects</CardTitle>
-                <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">{projects.length} Total</Badge>
-              </CardHeader>
-              
-              {loadingProjects ? (
-                <div className="space-y-3 mt-4">
-                  <Skeleton className="h-12 w-full bg-white/[0.02]" />
-                  <Skeleton className="h-12 w-full bg-white/[0.02]" />
-                  <Skeleton className="h-12 w-full bg-white/[0.02]" />
-                </div>
-              ) : projects.length === 0 ? (
-                <div className="text-center py-8 text-white/20 text-sm font-bold">
-                  No projects assigned to this member yet.
-                </div>
-              ) : (
-                <div className="overflow-x-auto mt-4">
-                  <table className="w-full text-sm text-left text-white/70">
-                    <thead className="text-[10px] font-black uppercase tracking-wider text-white/30 border-b border-white/[0.05]">
-                      <tr>
-                        <th className="pb-3 px-2">Order ID</th>
-                        <th className="pb-3 px-2">Client</th>
-                        <th className="pb-3 px-2">Status</th>
-                        <th className="pb-3 px-2">Value</th>
-                        <th className="pb-3 px-2">Deadline</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/[0.02]">
-                      {projects.map((project) => (
-                        <tr key={project._id} className="hover:bg-white/[0.01] transition-colors">
-                          <td className="py-3 px-2 font-mono text-xs text-white/90">{project.orderId}</td>
-                          <td className="py-3 px-2 font-bold text-white/80">{project.clientName}</td>
-                          <td className="py-3 px-2">
-                            <Badge className={`text-[10px] uppercase tracking-wider ${
-                              project.orderStatus === "Delivered" || project.orderStatus === "Completed" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
-                              project.orderStatus === "WIP" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
-                              project.orderStatus === "Revision" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                              "bg-white/5 text-white/40 border-white/10"
-                            }`}>
-                              {project.orderStatus}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-2 font-black text-white/90">${(project.value || 0).toLocaleString()}</td>
-                          <td className="py-3 px-2 text-white/40 text-xs">
-                            {project.deadline ? new Date(project.deadline).toLocaleDateString() : "N/A"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-4 text-xs text-white/40">
+              {member.email && (
+                <div className="flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{member.email}</span>
                 </div>
               )}
-            </Card>
-
+              {member.phone && (
+                <div className="flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{member.phone}</span>
+                </div>
+              )}
+              {member.location && (
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{member.location}</span>
+                </div>
+              )}
+            </div>
           </div>
+        </div>
+
+        {/* Skills Tag Strip */}
+        {member.skills && member.skills.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mt-6 pt-6 border-t border-white/[0.05]">
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/30 mr-2">
+              Capabilities:
+            </span>
+            {member.skills.map((skill: string) => (
+              <span
+                key={skill}
+                className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] text-white/70"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* KPI Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-6 rounded-2xl bg-card/60 border border-border/10 backdrop-blur-xl">
+          <div className="flex items-center justify-between text-muted-foreground/40 mb-3">
+            <span className="text-[10px] font-black uppercase tracking-widest">
+              Total Earnings
+            </span>
+            <DollarSign className="w-4 h-4 text-emerald-400" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-black text-foreground tabular-nums">
+            ${(member.total_earnings || 0).toLocaleString()}
+          </p>
+        </div>
+
+        <div className="p-6 rounded-2xl bg-card/60 border border-border/10 backdrop-blur-xl">
+          <div className="flex items-center justify-between text-muted-foreground/40 mb-3">
+            <span className="text-[10px] font-black uppercase tracking-widest">
+              Completed Orders
+            </span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-black text-foreground tabular-nums">
+            {member.projects_completed || 0}
+          </p>
+        </div>
+
+        <div className="p-6 rounded-2xl bg-card/60 border border-border/10 backdrop-blur-xl">
+          <div className="flex items-center justify-between text-muted-foreground/40 mb-3">
+            <span className="text-[10px] font-black uppercase tracking-widest">
+              On-Time Delivery
+            </span>
+            <Clock className="w-4 h-4 text-emerald-400" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-black text-foreground tabular-nums">
+            {member.on_time_delivery || 100}%
+          </p>
+        </div>
+
+        <div className="p-6 rounded-2xl bg-card/60 border border-border/10 backdrop-blur-xl">
+          <div className="flex items-center justify-between text-muted-foreground/40 mb-3">
+            <span className="text-[10px] font-black uppercase tracking-widest">
+              Performance Score
+            </span>
+            <Award className="w-4 h-4 text-emerald-400" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-black text-foreground tabular-nums">
+            {member.performance_score || 0}
+          </p>
+        </div>
+      </div>
+
+      {/* Activity Heatmap */}
+      <div className="rounded-2xl border border-border/10 bg-card/40 p-6 backdrop-blur-xl">
+        <h2 className="text-sm font-black uppercase tracking-wider text-foreground mb-4">
+          6-Month Activity Heatmap
+        </h2>
+        <ActivityHeatmap userId={id} />
+      </div>
+
+      {/* Assigned Projects */}
+      <div className="rounded-2xl border border-border/10 bg-card/40 p-6 backdrop-blur-xl space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-black uppercase tracking-wider text-foreground">
+            Assigned Projects ({projects.length})
+          </h2>
+          <Link href="/projects">
+            <Button variant="ghost" size="sm" className="text-xs font-bold text-emerald-400">
+              Manage Orders →
+            </Button>
+          </Link>
+        </div>
+
+        {projects.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-8 text-center">
+            No projects currently assigned to this operative.
+          </p>
+        ) : (
+          <div className="divide-y divide-border/10">
+            {projects.map((p: any) => {
+              const timeLeft = getTimeLeft(p.deadline, p.orderStatus);
+              return (
+                <div
+                  key={p._id}
+                  className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-accent/5 px-3 rounded-xl transition-colors"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-foreground">
+                        {p.clientName}
+                      </span>
+                      <span className="text-[10px] uppercase font-mono text-muted-foreground/60">
+                        {p.orderId}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Value: <span className="text-emerald-400 font-bold">${p.value}</span> · Deadline: {new Date(p.deadline).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xs font-bold ${timeLeft.color}`}>
+                      {timeLeft.text}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                        statusStyles[p.orderStatus] || ""
+                      }`}
+                    >
+                      {p.orderStatus}
+                    </Badge>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

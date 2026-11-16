@@ -24,6 +24,17 @@ export async function POST(req) {
       return NextResponse.json({ message: "No image provided" }, { status: 400 });
     }
 
+    // Security validation: file size limit (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return NextResponse.json({ message: "File size exceeds 5MB limit" }, { status: 400 });
+    }
+
+    // Security validation: strict image MIME type allowlist
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
+    if (!allowedMimeTypes.includes(file.type)) {
+      return NextResponse.json({ message: "Invalid image format. Allowed: JPEG, PNG, WEBP, GIF, AVIF" }, { status: 400 });
+    }
+
     // Convert file to base64 for ImgBB
     const bytes = await file.arrayBuffer();
     const base64 = Buffer.from(bytes).toString("base64");

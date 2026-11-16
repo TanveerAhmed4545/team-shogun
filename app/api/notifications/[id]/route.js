@@ -15,11 +15,16 @@ export async function PUT(req, { params }) {
     const { id } = await params;
     const body = await req.json();
 
-    const notification = await Notification.findByIdAndUpdate(
-      id,
+    const filter = session.user.role === "admin" ? { _id: id } : { _id: id, userId: session.user.id };
+    const notification = await Notification.findOneAndUpdate(
+      filter,
       { read: body.read },
       { new: true }
     );
+
+    if (!notification) {
+      return NextResponse.json({ message: "Notification not found or forbidden" }, { status: 404 });
+    }
 
     return NextResponse.json({ notification }, { status: 200 });
   } catch (error) {
@@ -37,7 +42,12 @@ export async function DELETE(req, { params }) {
     await dbConnect();
     const { id } = await params;
 
-    await Notification.findByIdAndDelete(id);
+    const filter = session.user.role === "admin" ? { _id: id } : { _id: id, userId: session.user.id };
+    const notification = await Notification.findOneAndDelete(filter);
+
+    if (!notification) {
+      return NextResponse.json({ message: "Notification not found or forbidden" }, { status: 404 });
+    }
 
     return NextResponse.json({ message: "Deleted" }, { status: 200 });
   } catch (error) {

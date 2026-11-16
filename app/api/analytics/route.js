@@ -3,11 +3,16 @@ import dbConnect from "@/lib/db";
 import Project from "@/models/Project";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
-
-// Removed static DEMO_ANALYTICS
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(req) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.status !== "active") {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
     const db = await dbConnect();
 
     // If no database, return demo data

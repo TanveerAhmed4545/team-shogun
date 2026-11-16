@@ -10,52 +10,55 @@
 
 ---
 
-## 🚀 Recent Core Upgrades (Production v3.0 - Hardened)
-- **⚡ Resilient Real-Time Sync**: Replaced third-party Pusher with a high-performance internal **Socket.io** server. Integrated a **polling fallback** to ensure 100% dashboard uptime on serverless platforms like Vercel.
-- **⏰ Tiered Deadline Alerts**: Automated cron system with **72h (Warning)** and **24h (Critical)** alerts. Includes color-coded email templates and in-app notifications for developers.
-- **🛡️ Hardened Administrative Workflows**: Integrated **SweetAlert2** for high-fidelity confirmation dialogs. Implemented strict RBAC enforcement on project deletions and team management.
-- **👤 Instant Session Synchronization**: Automatic avatar and profile sync across all dashboard components (Header, Sidebar, Profile) using real-time session hydration.
-- **📈 Production-Safe Seeding**: Refactored database maintenance tools to allow for "Safe Seeds" that preserve production data while ensuring core administrative access.
+## 🚀 Recent Core Upgrades (Production v4.0 - Cinematic Edition)
 
-## 🌟 Key Features
+### 💎 Ultra-Premium 3D Visual Experience
+*   **Interactive 3D Holographic Hero**: Completely replaced static components with an immersive, hardware-accelerated **Three.js** canvas, featuring a glowing 3D hologram of the Shogun warrior emblem.
+*   **GPU-Powered Particle Simulation**: Implemented a highly optimized custom WebGL **GLSL ShaderMaterial** to handle thousands of glowing dust particles directly on the GPU, yielding seamless 60fps performance and eliminating CPU main-thread overhead.
+*   **Parallax & Cinematic Controls**: Responsive mouse-tracking camera/rotation inertia (desktop) for a dynamic depth effect. Features a cinematic scaling entrance animation via **GSAP** on load.
+*   **Visibility State Awareness**: Seamlessly pauses/resumes the WebGL render loop when the browser tab is hidden (`visibilitychange`), conserving system resources, power, and memory.
+*   **Tri-Tone Dynamic Lighting**: Configured emerald-green front lights, cyan rim-back lighting, and deep purple bottom underglow for a cinematic cyberpunk aesthetic.
 
-### 📊 Operations Dashboard (Command Center)
-- **Real-Time KPIs**: Live tracking of Total Revenue, Active Orders, and Success Rates with trend indicators.
-- **Revenue Growth Chart**: Dynamic visualization of monthly financial trends aggregated from live transactions.
-- **Top Performers Widget**: Live leaderboard tracking individual developer points and project volume in real-time.
+### 🌟 Premium UX & Interactive Micro-Animations
+*   **Animated Social Proof Stats**: A high-impact trust strip detailing active metrics (e.g., 547+ Completed Projects, 5.0★ Rating) with scroll-triggered count-up animations for enhanced credibility.
+*   **Interactive Deliverables Accordion**: Reimagined the agency roadmap into an intuitive, custom-built accordion. Users can explore granular phases, specific deliverables, and connecting visual tracks with smooth CSS state transitions.
+*   **Interactive Live Demo Panel**: Designed a spring-physics-driven UI showcase utilizing **react-spring** with floating active orbs, magnetic hover buttons, and cursor-sensitive click-ripple effects.
+*   **Refinement and Consolidation**: Consolidated routing to present a unified landing experience at `/`, featuring dynamic platform badges, hover-state expansions, and a sleek modern layout.
 
-### 📝 Agile Project Management
-- **Status Lifecycle**: Standardized workflow through `Pending`, `WIP`, `Revision`, `Delivered`, `Completed`, and `Cancelled`.
-- **Dynamic Time Tracking**: Auto-calculating deadlines with tiered alerts (72h Email/24h Critical).
-- **Activity Audit Trail**: Secure, role-filtered history of every project update and status transition.
-
-### 🔒 Enterprise RBAC & Security
-- **Admin Command**: Global visibility, user management, project deletion, and financial overrides.
-- **Developer Focus**: Secure access to assigned projects with instant status update capabilities.
-- **Data Privacy**: Strict row-level security for notifications and activities.
+### ⚡ Resilient Real-Time Sync & Hardened Operations
+*   **High-Performance Socket Server**: Real-time operations driven by an internal **Socket.io** server, equipped with a resilient polling fallback ensuring 100% dashboard uptime even when deployed to serverless environments like Vercel.
+*   **Tiered Deadline Alerts**: Automated system triggering alert states at **72h (Warning)** and **24h (Critical)** before project deadlines, delivering custom HTML email templates and real-time developer notifications.
+*   **SweetAlert2 Dialogs**: Full confirmation dialog coverage for sensitive dashboard tasks, including project deletion, status updating, and role assignments.
+*   **Instant Session Hydration**: Real-time user avatar and state propagation across all modules (Sidebar, Header, Profile Manager).
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Framework:** [Next.js](https://nextjs.org/) (App Router, Server Actions, API Routes)
-- **Frontend / UI:** React, Tailwind CSS, [Framer Motion](https://www.framer.com/motion/), [SweetAlert2](https://sweetalert2.github.io/)
-- **Real-Time:** Socket.io (with internal Polling Fallback for Serverless)
-- **Authentication:** [NextAuth.js](https://next-auth.js.org/)
-- **Database:** MongoDB (via Mongoose)
-- **Deployment:** Vercel
+### Frontend & Core Design
+*   **Framework**: [Next.js](https://nextjs.org/) (App Router, Server Actions, API Routes)
+*   **3D Graphics & Animations**: [Three.js](https://threejs.org/) (WebGL, custom GLSL vertex/fragment shaders), [GSAP](https://gsap.com/), [Framer Motion](https://www.framer.com/motion/)
+*   **Styling & UI**: Tailwind CSS v4, [SweetAlert2](https://sweetalert2.github.io/), Lucide Icons
+*   **Interactive Physics**: React Spring
+
+### Backend, Database & Orchestration
+*   **Real-Time**: Standalone Node.js Express server with Socket.io & WebSocket protocols
+*   **Database**: MongoDB + [Mongoose ODM](https://mongoosejs.com/)
+*   **Authentication**: [NextAuth.js](https://next-auth.js.org/)
+*   **Mailing Service**: Nodemailer integration with dynamic HTML templating
+*   **Process Management**: Concurrently orchestration for unified dev scripts
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Clone the repository
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/TanveerAhmed4545/team-shogun.git
 cd team-shogun
 ```
 
-### 2. Install dependencies
+### 2. Install Dependencies
 ```bash
 npm install
 ```
@@ -79,11 +82,24 @@ INTERNAL_SOCKET_URL=http://localhost:4000
 CRON_SECRET=your_cron_secret
 ```
 
-### 4. Run the Development Environment
-This will start both the **Next.js Dev Server** and the **Standalone Socket.io Server** concurrently.
+### 4. Run the Development Server
+This single command executes both the **Next.js app** and the standalone **Socket.io event server** concurrently in dev mode.
 ```bash
 npm run dev
 ```
+
+---
+
+## 📊 Feature Walkthrough
+
+### 1. Operations Command Center
+A centralized real-time dashboard displaying active revenue metrics, order quantities, developer point lists, and operational KPIs.
+
+### 2. Agile Project Management
+Comprehensive pipelines shifting projects transparently across `Pending`, `WIP`, `Revision`, `Delivered`, `Completed`, and `Cancelled` states. Fully protected by SweetAlert confirmation logic and automated 72h/24h warning triggers.
+
+### 3. Strict RBAC System
+Granular level system separating Admins, Developers, Clients, and Pending users with robust row-level security over sensitive data collections.
 
 ---
 

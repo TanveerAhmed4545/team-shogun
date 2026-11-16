@@ -7,9 +7,10 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET() {
   try {
-    // Temporarily disabled session check for testing or public view
-    // const session = await getServerSession(authOptions);
-    // if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.status !== "active") {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
     await dbConnect();
 

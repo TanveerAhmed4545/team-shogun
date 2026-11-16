@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Transaction from "@/models/Transaction";
-
-// Removed DEMO_TRANSACTIONS
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.status !== "active") {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
     const db = await dbConnect();
     if (!db) {
       return NextResponse.json({ transactions: [] }, { status: 200 });
@@ -19,6 +24,15 @@ export async function GET() {
 
 export async function POST(req) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.status !== "active") {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    if (session.user.role !== "admin") {
+      return NextResponse.json({ message: "Forbidden: Admin access required" }, { status: 403 });
+    }
+
     const db = await dbConnect();
     if (!db) {
       return NextResponse.json({ message: "Database not connected" }, { status: 503 });
@@ -37,7 +51,7 @@ export async function POST(req) {
           title: "New Transaction",
           message: `A new transaction of $${transaction.amount} was recorded for ${transaction.clientName}.`,
           type: "payment",
-          link: "/analytics"
+          link: "/dashboard"
         })
       );
       await Promise.all(notificationPromises);

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+import { checkRateLimit } from "@/lib/utils/rate-limit";
 
 export async function PUT(req, { params }) {
   try {
@@ -15,6 +16,12 @@ export async function PUT(req, { params }) {
     const { id } = await params;
     if (session.user.id !== id) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    // Rate limiting: max 5 attempts per 15 minutes per user
+    const isAllowed = checkRateLimit(`pwd_change_${session.user.id}`, 5, 15 * 60 * 1000);
+    if (!isAllowed) {
+      return NextResponse.json({ message: "Too many password attempts. Try again in 15 minutes." }, { status: 429 });
     }
 
     await dbConnect();

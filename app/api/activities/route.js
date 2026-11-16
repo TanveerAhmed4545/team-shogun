@@ -6,10 +6,11 @@ import { authOptions } from "@/lib/auth";
 export async function GET(req) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return ApiResponse.unauthorized();
+    if (!session || session.user.status !== "active") return ApiResponse.unauthorized();
 
     const { searchParams } = new URL(req.url);
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const rawLimit = parseInt(searchParams.get("limit") || "10", 10);
+    const limit = Math.max(1, Math.min(isNaN(rawLimit) ? 10 : rawLimit, 100));
     const userId = session.user.role === "admin" ? null : session.user.id;
     const activities = await activityService.getRecentActivities(limit, userId);
     
