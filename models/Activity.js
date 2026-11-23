@@ -16,4 +16,8 @@ const ActivitySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Indexes for activity timeline
+ActivitySchema.index({ createdAt: -1 });
+ActivitySchema.index({ userId: 1, createdAt: -1 });
+
 export default mongoose.models.Activity || mongoose.model("Activity", ActivitySchema);

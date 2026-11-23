@@ -48,4 +48,10 @@ const ProjectSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Indexes for query performance and fast lookup
+ProjectSchema.index({ orderStatus: 1, deadline: 1 });
+ProjectSchema.index({ "developer.id": 1 });
+ProjectSchema.index({ createdAt: -1 });
+ProjectSchema.index({ orderId: 1 });
+
 export default mongoose.models.Project || mongoose.model("Project", ProjectSchema);

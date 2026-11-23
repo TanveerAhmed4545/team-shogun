@@ -111,10 +111,7 @@ export function ProjectChat({ projectId }: ProjectChatProps) {
     }
   });
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const uploadFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Only image uploads are supported currently");
       return;
@@ -122,7 +119,7 @@ export function ProjectChat({ projectId }: ProjectChatProps) {
 
     setIsUploading(true);
     const formData = new FormData();
-    formData.append("image", file); // Must match API route expects "image"
+    formData.append("image", file);
 
     try {
       const res = await fetch("/api/upload", {
@@ -139,14 +136,33 @@ export function ProjectChat({ projectId }: ProjectChatProps) {
         type: file.type,
       };
 
-      // Auto-send message with attachment if there's no text, or add to pending attachments
       sendMessageMutation.mutate({ content, attachments: [newAttachment] });
-      
+      toast.success("Image uploaded!");
     } catch (error: any) {
       toast.error(error.message);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith("image/")) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          uploadFile(file);
+          break;
+        }
+      }
     }
   };
 
@@ -181,7 +197,16 @@ export function ProjectChat({ projectId }: ProjectChatProps) {
       </div>
 
       {/* Messages Area */}
-      <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-4 max-h-[400px] min-h-[300px]">
+      <div 
+        ref={scrollRef} 
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          const file = e.dataTransfer.files?.[0];
+          if (file) uploadFile(file);
+        }}
+        className="flex-1 p-4 overflow-y-auto space-y-4 max-h-[400px] min-h-[300px]"
+      >
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
@@ -257,7 +282,8 @@ export function ProjectChat({ projectId }: ProjectChatProps) {
           type="text"
           value={content}
           onChange={handleTyping}
-          placeholder="Type a message..."
+          onPaste={handlePaste}
+          placeholder="Type a message or paste screenshot..."
           className="flex-1 bg-white/[0.04] border border-white/[0.06] focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20 text-white placeholder:text-white/20 text-sm rounded-xl px-4 py-2.5 outline-none transition-all"
         />
         <button 

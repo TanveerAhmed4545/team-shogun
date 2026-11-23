@@ -28,4 +28,8 @@ const TransactionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Indexes for financial ledger queries
+TransactionSchema.index({ type: 1, createdAt: -1 });
+TransactionSchema.index({ projectId: 1 });
+
 export default mongoose.models.Transaction || mongoose.model("Transaction", TransactionSchema);

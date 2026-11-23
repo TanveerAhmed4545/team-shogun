@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -16,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { getTimeLeft, autoPriority } from "@/lib/utils/project";
+import { useProjects, useUpdateProjectStatus } from "@/hooks/useProjects";
 
 const statusStyles: Record<string, string> = {
   Pending: "bg-amber-500/10 text-amber-500 border-amber-500/20",
@@ -32,51 +32,15 @@ const priorityColors: Record<string, string> = {
   Red: "bg-rose-500",
 };
 
-// Using centralized utilities from @/lib/utils/project
-
 const statusFlow = ["Pending", "WIP", "Revision", "Delivered", "Completed"];
 
 export function ProjectTable({ refreshTrigger }: { refreshTrigger?: number }) {
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: allProjects = [], isLoading: loading } = useProjects();
+  const updateStatusMutation = useUpdateProjectStatus();
+  const projects = allProjects.slice(0, 6);
 
-  useEffect(() => {
-    async function fetchProjects() {
-      try {
-        const res = await fetch("/api/projects");
-        const json = await res.json();
-        if (json.success && json.data) {
-          setProjects(json.data.slice(0, 6));
-        }
-      } catch (error) {
-        console.error("Failed to fetch projects:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProjects();
-  }, [refreshTrigger]);
-
-  const handleStatusChange = async (projectId: string, newStatus: string) => {
-    // Optimistic update
-    setProjects((prev) =>
-      prev.map((p) =>
-        p._id === projectId ? { ...p, orderStatus: newStatus } : p
-      )
-    );
-
-    try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderStatus: newStatus }),
-      });
-      if (res.ok) {
-        toast.success(`Status → ${newStatus}`);
-      }
-    } catch {
-      toast.error("Failed to update status");
-    }
+  const handleStatusChange = (projectId: string, newStatus: string) => {
+    updateStatusMutation.mutate({ projectId, status: newStatus });
   };
 
   if (loading) {

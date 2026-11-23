@@ -42,7 +42,8 @@ export async function GET(req) {
       }
     }
     
-    const projects = await projectService.getAllProjects(filter);
+    const limit = searchParams.get("limit") ? Math.min(parseInt(searchParams.get("limit"), 10) || 50, 200) : 0;
+    const projects = await projectService.getAllProjects(filter, limit);
     return ApiResponse.success(projects);
   } catch (error) {
     console.error("Projects GET Error:", error);

@@ -552,8 +552,21 @@ export default function ProjectsPage() {
                         </span>
                       </div>
 
-                      {/* Cards */}
-                      <div className="space-y-2 min-h-[200px]">
+                      {/* Cards & Drop Target */}
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const pid = e.dataTransfer.getData("text/plain");
+                          if (pid) {
+                            handleStatusChange(pid, column);
+                          }
+                        }}
+                        className="space-y-2 min-h-[220px] p-1.5 rounded-2xl border border-dashed border-white/[0.05] transition-colors"
+                      >
                         {columnProjects.map((project) => {
                           const timeLeft = getTimeLeft(project.deadline, project.orderStatus);
                           return (
@@ -564,7 +577,12 @@ export default function ProjectsPage() {
                               animate={{ opacity: 1, scale: 1 }}
                             >
                               <Card
-                                className="bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04] transition-all group cursor-pointer"
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData("text/plain", project._id);
+                                  e.dataTransfer.effectAllowed = "move";
+                                }}
+                                className="bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04] active:opacity-60 transition-all group cursor-grab active:cursor-grabbing"
                                 onClick={() => {
                                   if (isAdmin || 
                                       session?.user?.id === project.developer?.id?._id?.toString() || 

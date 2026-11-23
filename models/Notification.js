@@ -16,4 +16,7 @@ const NotificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Compound index for user notifications ordered by unread and date
+NotificationSchema.index({ userId: 1, read: 1, createdAt: -1 });
+
 export default mongoose.models.Notification || mongoose.model("Notification", NotificationSchema);

@@ -12,6 +12,7 @@ if (typeof window !== "undefined") {
 
 // ─── GLSL Shaders — GPU-side particle animation ───────────────────────────
 const PARTICLE_VERTEX_SHADER = `
+  precision highp float;
   attribute float aSpeed;
   attribute float aSize;
   uniform float uTime;
@@ -33,6 +34,12 @@ const PARTICLE_VERTEX_SHADER = `
 `;
 
 const PARTICLE_FRAGMENT_SHADER = `
+  #ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+  #else
+    precision mediump float;
+  #endif
+
   uniform float uTime;
 
   void main() {
@@ -72,22 +79,40 @@ export default function ThreeBackground() {
       powerPreference: "high-performance",
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // IMPROVEMENT 10: Reduced pixel ratio on mobile (was Math.min(dpr, 2))
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.0 : 1.5));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.0;
 
-    containerRef.current.appendChild(renderer.domElement);
+    const canvas = renderer.domElement;
+    containerRef.current.appendChild(canvas);
+
+    // ─── WEBGL CONTEXT LOSS RECOVERY ─────────────────────────────────────
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      cancelAnimationFrame(rafId);
+    };
+
+    const handleContextRestored = () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.0 : 1.5));
+      lastTime = performance.now();
+      clock.getDelta();
+      animate();
+    };
+
+    canvas.addEventListener("webglcontextlost", handleContextLost, false);
+    canvas.addEventListener("webglcontextrestored", handleContextRestored, false);
 
     // ─── HOLOGRAM MATERIALS ───────────────────────────────────────────────
     const hologramMaterial = new THREE.MeshStandardMaterial({
       color: 0x10b981,
       emissive: 0x10b981,
-      emissiveIntensity: 1.5,
+      emissiveIntensity: 1.0,
       wireframe: true,
       transparent: true,
       opacity: 0.8,
-      toneMapped: false,
+      toneMapped: true,
     });
 
     const hologramSolidMaterial = new THREE.MeshPhysicalMaterial({
@@ -98,12 +123,20 @@ export default function ThreeBackground() {
       roughness: 0.2,
       clearcoat: 1.0,
       transparent: true,
-      opacity: 0.0, // IMPROVEMENT 4: start invisible for entrance animation
+      opacity: 0.0, // start invisible for entrance animation
+      polygonOffset: true, // GPU depth offset eliminates wireframe z-fighting
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
     });
 
-    // ─── WARRIOR GROUP ────────────────────────────────────────────────────
+    // ─── WARRIOR HIERARCHY ────────────────────────────────────────────────
+    // warriorGroup: Position & continuous 360° rotation driven by GSAP ScrollTrigger
+    // warriorInner: Mouse parallax tilt & organic hover (isolated transforms)
     const warriorGroup = new THREE.Group();
     scene.add(warriorGroup);
+
+    const warriorInner = new THREE.Group();
+    warriorGroup.add(warriorInner);
 
     // ─── GLTF LOADER ──────────────────────────────────────────────────────
     const loader = new GLTFLoader();
@@ -124,9 +157,11 @@ export default function ThreeBackground() {
         const scale = baseScale / maxDim;
 
         model.scale.set(scale, scale, scale);
+        const baseOffsetY = -center.y * scale;
         model.position.x = -center.x * scale;
-        model.position.y = -center.y * scale;
+        model.position.y = baseOffsetY;
         model.position.z = -center.z * scale;
+        model.userData.baseY = baseOffsetY;
 
         const meshes: THREE.Mesh[] = [];
         model.traverse((child) => {
@@ -137,20 +172,18 @@ export default function ThreeBackground() {
           child.material = hologramSolidMaterial;
           if (child instanceof THREE.SkinnedMesh) {
             const skinnedWireframe = new THREE.SkinnedMesh(child.geometry, hologramMaterial);
-            skinnedWireframe.scale.set(1.01, 1.01, 1.01);
             skinnedWireframe.skeleton = child.skeleton;
             skinnedWireframe.bindMatrix.copy(child.bindMatrix);
             child.add(skinnedWireframe);
           } else {
             const wireframeMesh = new THREE.Mesh(child.geometry, hologramMaterial);
-            wireframeMesh.scale.set(1.01, 1.01, 1.01);
             child.add(wireframeMesh);
           }
         });
 
-        warriorGroup.add(model);
+        warriorInner.add(model);
 
-        // IMPROVEMENT 4: Cinematic entrance — fade in + elastic scale up
+        // Cinematic entrance — fade in + rise up from bottom to starting position + elastic scale
         gsap.to(hologramSolidMaterial, {
           opacity: 0.9,
           duration: 1.8,
@@ -158,12 +191,19 @@ export default function ThreeBackground() {
           delay: 0.2,
         });
         gsap.from(warriorGroup.scale, {
-          x: 0.55,
-          y: 0.55,
-          z: 0.55,
+          x: 0.6,
+          y: 0.6,
+          z: 0.6,
           duration: 2.2,
           ease: "elastic.out(1, 0.55)",
           delay: 0.1,
+        });
+        gsap.from(warriorGroup.position, {
+          y: (isMobile ? 0.0 : 0.8) - 3.0,
+          duration: 2.0,
+          ease: "power3.out",
+          delay: 0.1,
+          overwrite: "auto",
         });
 
         if (gltf.animations && gltf.animations.length > 0) {
@@ -184,7 +224,7 @@ export default function ThreeBackground() {
         wireMesh.scale.set(1.02, 1.02, 1.02);
         coreMesh.add(wireMesh);
         fallbackGroup.add(coreMesh);
-        warriorGroup.add(fallbackGroup);
+        warriorInner.add(fallbackGroup);
 
         // Entrance for fallback too
         gsap.to(hologramSolidMaterial, { opacity: 0.9, duration: 1.5, ease: "power3.out" });
@@ -229,6 +269,7 @@ export default function ThreeBackground() {
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
+      toneMapped: false,
     });
 
     const particleSystem = new THREE.Points(pGeo, particlesMaterial);
@@ -239,17 +280,17 @@ export default function ThreeBackground() {
     scene.add(ambientLight);
 
     // Primary green rim (front-right)
-    const rimLight = new THREE.DirectionalLight(0x10b981, 4);
+    const rimLight = new THREE.DirectionalLight(0x10b981, 3.2);
     rimLight.position.set(5, 5, -5);
     scene.add(rimLight);
 
     // Cyan back-rim — adds edge depth and separation
-    const cyanRim = new THREE.DirectionalLight(0x06b6d4, 3);
+    const cyanRim = new THREE.DirectionalLight(0x06b6d4, 2.5);
     cyanRim.position.set(-5, 3, -8);
     scene.add(cyanRim);
 
     // Purple underglow — makes the base feel like it's hovering
-    const underGlow = new THREE.PointLight(0x7c3aed, 2.5, 18);
+    const underGlow = new THREE.PointLight(0x7c3aed, 2.0, 18);
     underGlow.position.set(0, -5, 2);
     scene.add(underGlow);
 
@@ -264,74 +305,114 @@ export default function ThreeBackground() {
       window.addEventListener("mousemove", handleMouseMove);
     }
 
-    // ─── IMPROVEMENT 8: Smoother Scroll Scrub (2.5 + eased tweens) ────────
-    const baseY = isMobile ? -1.5 : -3.0;
+    // ─── IMPROVEMENT 8: 360° Continuous Scroll Rotation & Spatial Staging ─
+    const baseY = isMobile ? 0.0 : 0.8;
     warriorGroup.position.set(0, baseY, 0);
-    const shiftX = isMobile ? 0 : 3;
+    warriorGroup.rotation.set(0, 0, 0);
+    const shiftX = isMobile ? 0 : 2.8;
 
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: document.body,
         start: "top top",
         end: "bottom bottom",
-        scrub: 2.5, // was 1.5 — smoother lag
+        scrub: 1.2,
       },
     });
 
-    tl.to(warriorGroup.position, { x: shiftX, y: -2, z: -2, duration: 1, ease: "power2.inOut" })
-      .to(warriorGroup.rotation, { y: -Math.PI / 6, duration: 1, ease: "power2.inOut" }, "<")
-      .to(warriorGroup.position, { x: -shiftX, y: -1, z: 0, duration: 1, ease: "power2.inOut" })
-      .to(warriorGroup.rotation, { y: Math.PI / 4, duration: 1, ease: "power2.inOut" }, "<")
-      .to(warriorGroup.position, { x: 0, y: -2, z: isMobile ? 0 : 2, duration: 1, ease: "power2.inOut" })
-      .to(warriorGroup.rotation, { y: 0, x: -0.1, duration: 1, ease: "power2.inOut" }, "<");
+    // 360-degree rotation continuously scrubbed with scroll depth:
+    // Completes 3 full 360° revolutions across the page journey, perfectly facing front at every key milestone
+    tl.to(
+      warriorGroup.rotation,
+      {
+        y: Math.PI * 6,
+        x: -0.08,
+        ease: "none",
+        duration: 3,
+      },
+      0
+    );
+
+    // Dynamic spatial staging flanking content as user scrolls
+    tl.to(
+      warriorGroup.position,
+      {
+        x: shiftX,
+        y: baseY - 1.0,
+        z: -2,
+        duration: 1,
+        ease: "power1.inOut",
+      },
+      0
+    )
+      .to(
+        warriorGroup.position,
+        {
+          x: -shiftX,
+          y: baseY - 0.4,
+          z: 0,
+          duration: 1,
+          ease: "power1.inOut",
+        },
+        1
+      )
+      .to(
+        warriorGroup.position,
+        {
+          x: 0,
+          y: baseY - 1.5,
+          z: isMobile ? 0 : 1.5,
+          duration: 1,
+          ease: "power1.inOut",
+        },
+        2
+      );
 
     // ─── ANIMATION LOOP ───────────────────────────────────────────────────
     const clock = new THREE.Clock();
     let rafId: number;
-    // IMPROVEMENT 6: 60fps frame cap
     let lastTime = 0;
-    // IMPROVEMENT 3: Hologram glitch state
     let nextGlitch = 2.0;
 
     const animate = (time: number = 0) => {
       rafId = requestAnimationFrame(animate);
 
-      // IMPROVEMENT 6: Skip frame if too soon (60fps cap ~16.6ms)
-      if (time - lastTime < 16.6) return;
+      // Frame cap on high-frequency monitors
+      if (time - lastTime < 8.3) return;
       lastTime = time;
 
-      const delta = clock.getDelta();
+      const rawDelta = clock.getDelta();
+      const delta = Math.min(rawDelta, 0.05); // clamped delta avoids lag-warp
       const elapsed = clock.elapsedTime;
 
       // Update GPU particle time uniform (replaces entire JS particle loop!)
       particleUniforms.uTime.value = elapsed;
 
-      // Update skeletal animation mixer
+      // Update skeletal animation mixer or procedural floating
       if (mixer) {
         mixer.update(delta);
-      } else if (modelLoaded && warriorGroup.children[0]) {
-        // Procedural float on static models
-        warriorGroup.children[0].position.y = Math.sin(elapsed * 2) * 0.1;
+      } else if (modelLoaded && warriorInner.children[0]) {
+        // Procedural organic float on inner group
+        warriorInner.position.y = Math.sin(elapsed * 1.5) * 0.06;
+        warriorInner.rotation.z = Math.sin(elapsed * 0.8) * 0.012;
       }
 
-      // IMPROVEMENT 2: Smooth mouse parallax lerp (added on top of scroll rotation)
+      // Smooth mouse parallax lerp on inner group (never interferes with GSAP scroll rotation on warriorGroup)
       if (!isMobile) {
-        warriorGroup.rotation.x += (targetRotX - warriorGroup.rotation.x) * 0.04;
-        // We blend toward target, but don't override GSAP's Y — add as offset
-        const parallaxY = targetRotY * 0.5;
-        warriorGroup.rotation.y += (parallaxY - warriorGroup.rotation.y) * 0.04;
+        warriorInner.rotation.x += (targetRotX - warriorInner.rotation.x) * 0.05;
+        warriorInner.rotation.y += (targetRotY * 0.35 - warriorInner.rotation.y) * 0.05;
       }
 
       // IMPROVEMENT 3: Hologram emissive pulse + random glitch spike
-      const pulse = 1.2 + Math.sin(elapsed * 2.8) * 0.35;
+      const pulse = 1.0 + Math.sin(elapsed * 2.8) * 0.25;
       let glitch = 0;
       if (elapsed > nextGlitch) {
-        glitch = Math.random() * 0.8;
+        glitch = Math.random() * 0.5;
         nextGlitch = elapsed + 2.5 + Math.random() * 3.5;
       }
       hologramMaterial.emissiveIntensity = pulse + glitch;
 
-      // Subtle particle field rotation for depth (very slow — no JS position loop)
+      // Subtle particle field rotation for depth
       particleSystem.rotation.y = Math.sin(elapsed * 0.08) * 0.08;
 
       renderer.render(scene, camera);
@@ -339,7 +420,7 @@ export default function ThreeBackground() {
 
     animate();
 
-    // IMPROVEMENT 5: Pause rendering when tab is hidden
+    // Pause rendering when tab is hidden
     const handleVisibilityChange = () => {
       if (document.hidden) {
         cancelAnimationFrame(rafId);
@@ -366,8 +447,22 @@ export default function ThreeBackground() {
       window.removeEventListener("resize", handleResize);
       if (!isMobile) window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      canvas.removeEventListener("webglcontextlost", handleContextLost);
+      canvas.removeEventListener("webglcontextrestored", handleContextRestored);
       cancelAnimationFrame(rafId);
+      tl.scrollTrigger?.kill();
       tl.kill();
+
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh || object instanceof THREE.Points) {
+          object.geometry?.dispose();
+          if (Array.isArray(object.material)) {
+            object.material.forEach((m) => m.dispose());
+          } else if (object.material) {
+            object.material.dispose();
+          }
+        }
+      });
 
       if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {
         containerRef.current.removeChild(renderer.domElement);

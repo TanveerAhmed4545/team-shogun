@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { ChevronRight, ArrowUpRight } from "lucide-react";
+import { ChevronRight, ArrowUpRight, Menu, X, Sparkles, Briefcase } from "lucide-react";
 import MagneticButton from "@/components/landing/MagneticButton";
 import { cinematic, hoverSpring } from "@/lib/animations";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -29,6 +29,7 @@ export default function HeroSection3D() {
 
   const [showHeader, setShowHeader] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
@@ -102,7 +103,7 @@ export default function HeroSection3D() {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-6 lg:space-x-10 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/50">
-            {["Services", "Process", "Work", "Platforms", "Contact"].map((item) => (
+            {["Services", "Process", "Platforms", "Work", "Contact"].map((item) => (
               <Link
                 key={item}
                 href={`#${item.toLowerCase()}`}
@@ -113,33 +114,68 @@ export default function HeroSection3D() {
             ))}
           </nav>
 
-          <div className="flex items-center space-x-3 md:space-x-4 shrink-0">
+          <div className="flex items-center space-x-2 md:space-x-4 shrink-0">
+            <ThemeToggle />
             {session ? (
-              <>
-                <ThemeToggle />
-                <MagneticButton strength={0.25}>
-                  <Link
-                    href="/dashboard"
-                    className="btn-shimmer bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2 md:px-6 md:py-2.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider transition-colors duration-200 inline-flex items-center gap-1 md:gap-1.5 whitespace-nowrap"
-                  >
-                    Dashboard <ArrowUpRight className="w-3 h-3 md:w-3.5 md:h-3.5 stroke-[2.5]" />
-                  </Link>
-                </MagneticButton>
-              </>
-            ) : (
-              <>
-                <ThemeToggle />
+              <MagneticButton strength={0.25}>
                 <Link
-                  href="/login"
-                  className="text-[10px] md:text-xs font-black uppercase tracking-wider text-foreground/60 hover:text-foreground transition-colors duration-200 whitespace-nowrap"
+                  href="/dashboard"
+                  className="btn-shimmer bg-emerald-500 hover:bg-emerald-400 text-black px-3.5 py-1.5 md:px-6 md:py-2.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider transition-colors duration-200 inline-flex items-center gap-1 md:gap-1.5 whitespace-nowrap"
                 >
-                  Login
+                  Dashboard <ArrowUpRight className="w-3 h-3 md:w-3.5 md:h-3.5 stroke-[2.5]" />
                 </Link>
-
-              </>
+              </MagneticButton>
+            ) : (
+              <Link
+                href="/login"
+                className="text-[10px] md:text-xs font-black uppercase tracking-wider text-foreground/60 hover:text-foreground transition-colors duration-200 whitespace-nowrap hidden sm:inline-block"
+              >
+                Login
+              </Link>
             )}
+
+            {/* Mobile Hamburger Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg bg-white/5 hover:bg-white/10 text-foreground border border-white/10 transition-colors"
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer */}
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-2xl border-b border-border p-6 shadow-2xl flex flex-col gap-4 z-50"
+          >
+            <div className="flex flex-col space-y-3">
+              {["Services", "Process", "Platforms", "Work", "Contact"].map((item) => (
+                <Link
+                  key={item}
+                  href={`#${item.toLowerCase()}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-sm font-black uppercase tracking-[0.2em] text-foreground/70 hover:text-emerald-400 transition-colors py-2 border-b border-white/5"
+                >
+                  {item}
+                </Link>
+              ))}
+            </div>
+            {!session && (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-2 text-center text-xs font-black uppercase tracking-wider py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black transition-colors"
+              >
+                Login to Dashboard
+              </Link>
+            )}
+          </motion.div>
+        )}
       </motion.header>
 
       {/* Hero section with no background or particles, so ThreeBackground can show through */}
@@ -199,6 +235,29 @@ export default function HeroSection3D() {
                 </span>
               </div>
             ))}
+          </motion.div>
+
+          {/* Primary Conversion CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.3 }}
+            className="mt-8 flex flex-wrap items-center justify-center gap-3 md:gap-4 pointer-events-auto z-20"
+          >
+            <Link
+              href="#work"
+              className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs md:text-sm font-black uppercase tracking-wider transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 inline-flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              Explore Work
+            </Link>
+            <Link
+              href="#contact"
+              className="px-6 py-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white border border-white/10 hover:border-emerald-500/30 text-xs md:text-sm font-black uppercase tracking-wider transition-all duration-200 hover:scale-105 active:scale-95 inline-flex items-center gap-2 backdrop-blur-md"
+            >
+              <Briefcase className="w-4 h-4 text-emerald-400" />
+              Get In Touch
+            </Link>
           </motion.div>
         </div>
 

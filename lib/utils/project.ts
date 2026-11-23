@@ -1,3 +1,14 @@
+function parseDeadline(deadline: string | Date): Date {
+  if (deadline instanceof Date) return deadline;
+  if (typeof deadline === "string") {
+    // If date-only format (YYYY-MM-DD), set to end of that day to avoid premature overdue in UTC
+    if (deadline.length === 10 && !deadline.includes("T")) {
+      return new Date(`${deadline}T23:59:59`);
+    }
+  }
+  return new Date(deadline);
+}
+
 /**
  * Calculates the time left until a deadline, considering the project status.
  * If the project is Delivered, Completed, or Cancelled, it returns a placeholder.
@@ -13,7 +24,7 @@ export function getTimeLeft(deadline: string | Date, status?: string) {
   }
 
   const now = new Date();
-  const dl = new Date(deadline);
+  const dl = parseDeadline(deadline);
   const diff = dl.getTime() - now.getTime();
 
   if (diff <= 0) {
@@ -55,7 +66,7 @@ export function getTimeLeft(deadline: string | Date, status?: string) {
  */
 export function autoPriority(deadline: string | Date) {
   const now = new Date();
-  const dl = new Date(deadline);
+  const dl = parseDeadline(deadline);
   const diff = dl.getTime() - now.getTime();
   const days = diff / (1000 * 60 * 60 * 24);
   
